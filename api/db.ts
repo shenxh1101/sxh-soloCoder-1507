@@ -8,7 +8,7 @@ const __dirname = path.dirname(__filename);
 const DATA_DIR = path.join(__dirname, '..', 'data');
 const DB_FILE = path.join(DATA_DIR, 'db.json');
 
-const CURRENT_DB_VERSION = 3;
+const CURRENT_DB_VERSION = 4;
 
 interface Database {
   version: number;
@@ -104,6 +104,17 @@ function migrateDB(db: any): Database {
     db.followUpRecords = db.followUpRecords.map((f: any) => ({
       ...f,
       arrived_at: f.arrived_at || f.arrivedAt || null,
+    }));
+  }
+  
+  if (fromVersion < 4) {
+    db.maintenanceRecords = db.maintenanceRecords || [];
+    db.maintenanceRecords = db.maintenanceRecords.map((r: any) => ({
+      ...r,
+      start_time: r.start_time || r.startTime || null,
+      end_time: r.end_time || r.endTime || null,
+      duration_minutes: r.duration_minutes || r.durationMinutes || null,
+      is_rework: r.is_rework !== undefined ? r.is_rework : (r.isRework || false),
     }));
   }
   

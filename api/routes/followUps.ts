@@ -134,9 +134,19 @@ router.put('/:id', (req, res) => {
   }
 
   const updateData = toSnakeCase(req.body);
+  
+  if (updateData.scheduled_date === '' || updateData.scheduled_date === undefined) {
+    updateData.scheduled_date = null;
+  }
+  
   if (updateData.status === 'arrived' && !records[index].arrived_at) {
     updateData.arrived_at = new Date().toISOString();
   }
+  
+  if (updateData.status && updateData.status !== 'scheduled' && updateData.status !== 'arrived') {
+    updateData.scheduled_date = null;
+  }
+  
   records[index] = { ...records[index], ...updateData };
   saveFollowUpRecords(records);
   

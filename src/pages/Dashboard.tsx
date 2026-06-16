@@ -165,6 +165,10 @@ export default function Dashboard() {
     }
   };
 
+  const handleMarkArrivedAndCreateRecord = (record: FollowUpRecord) => {
+    navigate(`/records/new?vehicleId=${record.vehicleId}`);
+  };
+
   const getUrgencyBadge = (remaining?: number) => {
     if (remaining === undefined) return null;
     if (remaining <= 0) {
@@ -285,10 +289,11 @@ export default function Dashboard() {
                           已到店
                         </button>
                         <button
-                          className="btn-secondary btn-xs"
-                          onClick={() => navigate(`/vehicles/${record.vehicleId}`)}
+                          className="btn-accent btn-xs flex-1"
+                          onClick={() => handleMarkArrivedAndCreateRecord(record)}
                         >
-                          详情
+                          <Wrench className="w-3 h-3 mr-1" />
+                          到店开单
                         </button>
                       </div>
                     </div>

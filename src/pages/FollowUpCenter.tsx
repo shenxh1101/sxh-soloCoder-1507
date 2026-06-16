@@ -16,6 +16,7 @@ import {
   Eye,
   Edit3,
   Trash2,
+  Wrench,
 } from 'lucide-react';
 import { useAppStore } from '../store/useAppStore';
 import type { FollowUpRecord, FollowUpStatus } from '../../shared/types';
@@ -37,6 +38,7 @@ export default function FollowUpCenter() {
     type: '',
     content: '',
     scheduledDate: '',
+    scheduledTime: '',
     status: 'called' as FollowUpStatus,
   });
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -61,6 +63,18 @@ export default function FollowUpCenter() {
       year: 'numeric',
       month: '2-digit',
       day: '2-digit',
+    });
+  };
+
+  const formatFullDateTime = (dateStr: string) => {
+    const date = new Date(dateStr);
+    return date.toLocaleDateString('zh-CN', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    }) + ' ' + date.toLocaleTimeString('zh-CN', {
+      hour: '2-digit',
+      minute: '2-digit',
     });
   };
 
@@ -97,10 +111,18 @@ export default function FollowUpCenter() {
 
   const handleEdit = (record: FollowUpRecord) => {
     setEditingRecord(record);
+    let datePart = '';
+    let timePart = '';
+    if (record.scheduledDate) {
+      const dt = new Date(record.scheduledDate);
+      datePart = dt.toISOString().split('T')[0];
+      timePart = dt.toTimeString().slice(0, 5);
+    }
     setEditForm({
       type: record.type,
       content: record.content,
-      scheduledDate: record.scheduledDate ? record.scheduledDate.split('T')[0] : '',
+      scheduledDate: datePart,
+      scheduledTime: timePart,
       status: record.status,
     });
     setShowEditModal(true);
@@ -109,7 +131,18 @@ export default function FollowUpCenter() {
   const handleSaveEdit = async () => {
     if (!editingRecord) return;
     try {
-      await updateFollowUp(editingRecord.id, editForm);
+      let scheduledDate: string | null = null;
+      if (editForm.scheduledDate) {
+        const time = editForm.scheduledTime || '09:00';
+        scheduledDate = `${editForm.scheduledDate}T${time}:00`;
+      }
+      const updateData = {
+        type: editForm.type,
+        content: editForm.content,
+        scheduledDate,
+        status: editForm.status,
+      };
+      await updateFollowUp(editingRecord.id, updateData);
       setShowEditModal(false);
     } catch (e) {
       console.error(e);
@@ -122,6 +155,10 @@ export default function FollowUpCenter() {
     } catch (e) {
       console.error(e);
     }
+  };
+
+  const handleMarkArrivedAndCreateRecord = (record: FollowUpRecord) => {
+    navigate(`/records/new?vehicleId=${record.vehicleId}`);
   };
 
   const handleDelete = async () => {
@@ -305,7 +342,7 @@ export default function FollowUpCenter() {
                     {record.scheduledDate && (
                       <span className="flex items-center gap-1">
                         <CalendarIcon className="w-4 h-4" />
-                        预约：{formatDate(record.scheduledDate)}
+                        预约：{formatFullDateTime(record.scheduledDate)}
                       </span>
                     )}
                     {record.arrivedAt && (
@@ -324,13 +361,22 @@ export default function FollowUpCenter() {
                 
                 <div className="flex items-center gap-2 ml-4">
                   {record.status === 'scheduled' && (
-                    <button
-                      className="btn-success btn-sm"
-                      onClick={() => handleMarkArrived(record)}
-                    >
-                      <CheckCircle className="w-4 h-4 mr-1" />
-                      标记到店
-                    </button>
+                    <>
+                      <button
+                        className="btn-success btn-sm"
+                        onClick={() => handleMarkArrived(record)}
+                      >
+                        <CheckCircle className="w-4 h-4 mr-1" />
+                        标记到店
+                      </button>
+                      <button
+                        className="btn-accent btn-sm"
+                        onClick={() => handleMarkArrivedAndCreateRecord(record)}
+                      >
+                        <Wrench className="w-4 h-4 mr-1" />
+                        到店开单
+                      </button>
+                    </>
                   )}
                   <button
                     className="btn-secondary btn-sm"
@@ -392,13 +438,21 @@ export default function FollowUpCenter() {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">预约日期</label>
-            <input
-              type="date"
-              className="input w-full"
-              value={editForm.scheduledDate}
-              onChange={(e) => setEditForm({ ...editForm, scheduledDate: e.target.value })}
-            />
+            <label className="block text-sm font-medium text-gray-700 mb-1">预约到店时间</label>
+            <div className="flex gap-2">
+              <input
+                type="date"
+                className="input flex-1"
+                value={editForm.scheduledDate}
+                onChange={(e) => setEditForm({ ...editForm, scheduledDate: e.target.value })}
+              />
+              <input
+                type="time"
+                className="input w-32"
+                value={editForm.scheduledTime}
+                onChange={(e) => setEditForm({ ...editForm, scheduledTime: e.target.value })}
+              />
+            </div>
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">状态</label>

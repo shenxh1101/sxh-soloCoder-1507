@@ -56,6 +56,7 @@ export default function VehicleDetail() {
     type: '电话联系',
     content: '',
     scheduledDate: '',
+    scheduledTime: '',
     status: 'called' as FollowUpStatus,
   });
   const [submittingFollowUp, setSubmittingFollowUp] = useState(false);
@@ -144,6 +145,18 @@ export default function VehicleDetail() {
     });
   };
 
+  const formatFullDateTime = (dateStr: string) => {
+    const date = new Date(dateStr);
+    return date.toLocaleDateString('zh-CN', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    }) + ' ' + date.toLocaleTimeString('zh-CN', {
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  };
+
   const formatDateTime = (dateStr: string) => {
     return new Date(dateStr).toLocaleString('zh-CN', {
       month: '2-digit',
@@ -172,17 +185,23 @@ export default function VehicleDetail() {
     if (!id || !followUpForm.content.trim()) return;
     setSubmittingFollowUp(true);
     try {
+      let scheduledDate: string | null = null;
+      if (followUpForm.scheduledDate) {
+        const time = followUpForm.scheduledTime || '09:00';
+        scheduledDate = `${followUpForm.scheduledDate}T${time}:00`;
+      }
       await addFollowUp({
         vehicleId: parseInt(id),
         type: followUpForm.type,
         content: followUpForm.content,
-        scheduledDate: followUpForm.scheduledDate || null,
+        scheduledDate,
         status: followUpForm.status,
       });
       setFollowUpForm({
         type: '电话联系',
         content: '',
         scheduledDate: '',
+        scheduledTime: '',
         status: 'called',
       });
       setShowFollowUpModal(false);
@@ -510,7 +529,7 @@ export default function VehicleDetail() {
                     {followUp.scheduledDate && (
                       <p className="text-xs text-warning-600 flex items-center gap-1">
                         <CalendarCheck className="w-3 h-3" />
-                        预约时间：{formatDate(followUp.scheduledDate)}
+                        预约时间：{formatFullDateTime(followUp.scheduledDate)}
                       </p>
                     )}
                     {(followUp as any).source && (
@@ -610,14 +629,24 @@ export default function VehicleDetail() {
           {followUpForm.status === 'scheduled' && (
             <div>
               <label className="label">预约到店时间</label>
-              <input
-                type="date"
-                className="input"
-                value={followUpForm.scheduledDate}
-                onChange={(e) =>
-                  setFollowUpForm({ ...followUpForm, scheduledDate: e.target.value })
-                }
-              />
+              <div className="flex gap-2">
+                <input
+                  type="date"
+                  className="input flex-1"
+                  value={followUpForm.scheduledDate}
+                  onChange={(e) =>
+                    setFollowUpForm({ ...followUpForm, scheduledDate: e.target.value })
+                  }
+                />
+                <input
+                  type="time"
+                  className="input w-32"
+                  value={followUpForm.scheduledTime}
+                  onChange={(e) =>
+                    setFollowUpForm({ ...followUpForm, scheduledTime: e.target.value })
+                  }
+                />
+              </div>
             </div>
           )}
           <div>
