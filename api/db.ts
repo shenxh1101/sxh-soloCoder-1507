@@ -8,7 +8,10 @@ const __dirname = path.dirname(__filename);
 const DATA_DIR = path.join(__dirname, '..', 'data');
 const DB_FILE = path.join(DATA_DIR, 'db.json');
 
+const CURRENT_DB_VERSION = 3;
+
 interface Database {
+  version: number;
   vehicles: any[];
   maintenanceRecords: any[];
   serviceItems: any[];
@@ -27,6 +30,7 @@ interface Database {
 }
 
 const defaultDB: Database = {
+  version: CURRENT_DB_VERSION,
   vehicles: [],
   maintenanceRecords: [],
   serviceItems: [],
@@ -56,6 +60,59 @@ function ensureDataDir() {
   }
 }
 
+function backupDB() {
+  if (!fs.existsSync(DB_FILE)) return;
+  const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+  const backupFile = path.join(DATA_DIR, `db.backup.${timestamp}.json`);
+  try {
+    fs.copyFileSync(DB_FILE, backupFile);
+    const backups = fs.readdirSync(DATA_DIR)
+      .filter(f => f.startsWith('db.backup.'))
+      .sort()
+      .reverse();
+    if (backups.length > 10) {
+      backups.slice(10).forEach(f => {
+        fs.unlinkSync(path.join(DATA_DIR, f));
+      });
+    }
+  } catch (e) {
+    console.warn('Backup failed:', e);
+  }
+}
+
+function migrateDB(db: any): Database {
+  const fromVersion = db.version || 1;
+  
+  if (fromVersion === CURRENT_DB_VERSION) {
+    return db as Database;
+  }
+  
+  backupDB();
+  console.log(`Migrating database from v${fromVersion} to v${CURRENT_DB_VERSION}`);
+  
+  if (fromVersion < 2) {
+    db.followUpRecords = db.followUpRecords || [];
+    db.followUpRecords = db.followUpRecords.map((f: any) => ({
+      ...f,
+      source: f.source || null,
+      scheduled_date: f.scheduled_date || f.scheduledDate || null,
+    }));
+  }
+  
+  if (fromVersion < 3) {
+    db.followUpRecords = db.followUpRecords || [];
+    db.followUpRecords = db.followUpRecords.map((f: any) => ({
+      ...f,
+      arrived_at: f.arrived_at || f.arrivedAt || null,
+    }));
+  }
+  
+  db.version = CURRENT_DB_VERSION;
+  saveDB(db);
+  console.log('Database migration completed');
+  return db as Database;
+}
+
 export function loadDB(): Database {
   ensureDataDir();
   if (!fs.existsSync(DB_FILE)) {
@@ -67,7 +124,9 @@ export function loadDB(): Database {
     if (data.charCodeAt(0) === 0xFEFF) {
       data = data.slice(1);
     }
-    const db = JSON.parse(data);
+    let db = JSON.parse(data);
+    
+    db = migrateDB(db);
     
     db.nextIds = db.nextIds || { ...defaultDB.nextIds };
     db.nextIds.vehicles = Math.max(db.nextIds.vehicles || 1, ...db.vehicles.map((v: any) => v.id), 0) + 1;

@@ -442,8 +442,8 @@
       "target_date": null,
       "current_mileage": 49500,
       "remaining_mileage": 500,
-      "status": "notified",
-      "notified_at": "2026-06-16T19:49:17.430Z",
+      "status": "pending",
+      "notified_at": null,
       "created_at": "2026-06-16T19:19:31.644Z"
     },
     {
@@ -482,18 +482,6 @@
       "source": "首页弹窗",
       "created_at": "2026-06-16T19:19:58.135Z",
       "created_by": "管理员"
-    },
-    {
-      "id": 15,
-      "vehicle_id": 1,
-      "type": "电话联系",
-      "content": "电话联系客户，提醒车辆保养，暂未预约到店时间。",
-      "scheduled_date": "",
-      "status": "scheduled",
-      "source": "首页弹窗",
-      "arrived_at": null,
-      "created_at": "2026-06-16T19:49:17.433Z",
-      "created_by": "管理员"
     }
   ],
   "settings": {
@@ -504,12 +492,11 @@
     "shopAddress": "北京市朝阳区汽修街88号"
   },
   "nextIds": {
-    "vehicles": 22,
-    "maintenanceRecords": 29,
-    "serviceItems": 39,
-    "mechanics": 20,
-    "reminders": 19,
-    "followUpRecords": 18
-  },
-  "version": 3
+    "vehicles": 18,
+    "maintenanceRecords": 25,
+    "serviceItems": 35,
+    "mechanics": 16,
+    "reminders": 15,
+    "followUpRecords": 13
+  }
 }

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useSearchParams } from 'react-router-dom';
 import {
   Car,
   Phone,
@@ -10,24 +10,32 @@ import {
   MapPin,
   Building,
   Printer,
+  FileText,
+  List,
 } from 'lucide-react';
 
 interface VehicleData {
   vehicle: any;
   records: any[];
   settings: any;
+  singleRecord?: any;
 }
 
 export default function PrintPage() {
   const { id } = useParams<{ id: string }>();
+  const [searchParams] = useSearchParams();
+  const mode = searchParams.get('mode') || 'vehicle';
+  const recordId = searchParams.get('recordId');
+  
   const [data, setData] = useState<VehicleData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [printMode, setPrintMode] = useState<'vehicle' | 'record'>(mode === 'record' ? 'record' : 'vehicle');
 
   useEffect(() => {
     if (id) {
       loadData(parseInt(id));
     }
-  }, [id]);
+  }, [id, recordId]);
 
   const loadData = async (vehicleId: number) => {
     try {
@@ -37,10 +45,18 @@ export default function PrintPage() {
       ]);
       const vehicleData = await vehicleRes.json();
       const settingsData = await settingsRes.json();
+      
+      let singleRecord = null;
+      if (mode === 'record' && recordId) {
+        const recordRes = await fetch(`/api/records/${recordId}`);
+        singleRecord = await recordRes.json();
+      }
+      
       setData({
         vehicle: vehicleData.vehicle,
         records: vehicleData.records || [],
         settings: settingsData,
+        singleRecord,
       });
     } catch (e) {
       console.error(e);
@@ -69,12 +85,42 @@ export default function PrintPage() {
     );
   }
 
-  const { vehicle, records, settings } = data;
-  const totalSpent = records.reduce((sum, r) => sum + (r.totalCost || 0), 0);
+  const { vehicle, records, settings, singleRecord } = data;
+  const displayRecords = printMode === 'record' && singleRecord ? [singleRecord] : records;
+  const totalSpent = displayRecords.reduce((sum, r) => sum + (r.totalCost || 0), 0);
 
   return (
     <div className="min-h-screen bg-white">
-      <div className="no-print fixed top-4 right-4 z-50">
+      <div className="no-print fixed top-4 right-4 z-50 flex flex-col gap-2">
+        <div className="bg-white rounded-xl shadow-lg p-2 mb-2">
+          <div className="text-xs text-gray-500 mb-2 px-2">打印模式</div>
+          <div className="flex gap-1">
+            <button
+              className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                printMode === 'vehicle'
+                  ? 'bg-primary-600 text-white'
+                  : 'text-gray-600 hover:bg-gray-100'
+              }`}
+              onClick={() => setPrintMode('vehicle')}
+            >
+              <List className="w-3 h-3 inline mr-1" />
+              全部记录
+            </button>
+            {singleRecord && (
+              <button
+                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                  printMode === 'record'
+                    ? 'bg-primary-600 text-white'
+                    : 'text-gray-600 hover:bg-gray-100'
+                }`}
+                onClick={() => setPrintMode('record')}
+              >
+                <FileText className="w-3 h-3 inline mr-1" />
+                单条记录
+              </button>
+            )}
+          </div>
+        </div>
         <button className="btn-primary" onClick={handlePrint}>
           <Printer className="w-4 h-4 mr-2" />
           打印
@@ -103,7 +149,7 @@ export default function PrintPage() {
         </div>
 
         <h2 className="text-xl font-bold text-center text-gray-900 mb-6">
-          车辆保养记录单
+          {printMode === 'record' ? '车辆维修单' : '车辆保养记录单'}
         </h2>
 
         <div className="bg-gray-50 rounded-xl p-6 mb-6">
@@ -156,10 +202,10 @@ export default function PrintPage() {
         <div className="mb-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
             <Wrench className="w-5 h-5 text-accent-600" />
-            维修历史记录
+            {printMode === 'record' ? '本次维修项目' : '维修历史记录'}
           </h3>
 
-          {records.length === 0 ? (
+          {displayRecords.length === 0 ? (
             <div className="text-center py-8 text-gray-400 border border-dashed border-gray-200 rounded-xl">
               暂无维修记录
             </div>
@@ -185,7 +231,7 @@ export default function PrintPage() {
                 </tr>
               </thead>
               <tbody>
-                {records.map((record) => (
+                {displayRecords.map((record) => (
                   <tr key={record.id}>
                     <td className="p-3 border border-gray-200">
                       {formatDate(record.createdAt)}
@@ -208,22 +254,36 @@ export default function PrintPage() {
                 ))}
               </tbody>
               <tfoot>
-                <tr className="bg-gray-50 font-semibold">
-                  <td colSpan={4} className="p-3 text-right border border-gray-200">
-                    累计消费
-                  </td>
-                  <td className="p-3 text-right border border-gray-200 text-accent-600">
-                    ¥{totalSpent.toLocaleString()}
-                  </td>
-                </tr>
-                <tr className="bg-gray-50">
-                  <td colSpan={4} className="p-3 text-right border border-gray-200">
-                    维修次数
-                  </td>
-                  <td className="p-3 text-right border border-gray-200">
-                    {records.length} 次
-                  </td>
-                </tr>
+                {printMode === 'vehicle' && (
+                  <>
+                    <tr className="bg-gray-50 font-semibold">
+                      <td colSpan={4} className="p-3 text-right border border-gray-200">
+                        累计消费
+                      </td>
+                      <td className="p-3 text-right border border-gray-200 text-accent-600">
+                        ¥{totalSpent.toLocaleString()}
+                      </td>
+                    </tr>
+                    <tr className="bg-gray-50">
+                      <td colSpan={4} className="p-3 text-right border border-gray-200">
+                        维修次数
+                      </td>
+                      <td className="p-3 text-right border border-gray-200">
+                        {records.length} 次
+                      </td>
+                    </tr>
+                  </>
+                )}
+                {printMode === 'record' && (
+                  <tr className="bg-gray-50 font-semibold">
+                    <td colSpan={4} className="p-3 text-right border border-gray-200">
+                      本次费用合计
+                    </td>
+                    <td className="p-3 text-right border border-gray-200 text-accent-600">
+                      ¥{totalSpent.toLocaleString()}
+                    </td>
+                  </tr>
+                )}
               </tfoot>
             </table>
           )}

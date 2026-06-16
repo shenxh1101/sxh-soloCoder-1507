@@ -28,6 +28,7 @@ interface AppState {
   mechanicStats: MechanicStats[];
   revenueStats: RevenueStats[];
   followUps: FollowUpRecord[];
+  allFollowUps: FollowUpRecord[];
   loading: boolean;
   error: string | null;
 
@@ -60,9 +61,11 @@ interface AppState {
   fetchRevenueStats: (months?: number) => Promise<void>;
 
   fetchFollowUps: (vehicleId: number) => Promise<void>;
+  fetchAllFollowUps: (filters?: any) => Promise<void>;
   addFollowUp: (data: any) => Promise<FollowUpRecord>;
   updateFollowUp: (id: number, data: any) => Promise<FollowUpRecord>;
   deleteFollowUp: (id: number) => Promise<void>;
+  fetchRecordDetail: (id: number) => Promise<MaintenanceRecord | null>;
 }
 
 export const useAppStore = create<AppState>((set, get) => ({
@@ -79,6 +82,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   mechanicStats: [],
   revenueStats: [],
   followUps: [],
+  allFollowUps: [],
   loading: false,
   error: null,
 
@@ -185,18 +189,6 @@ export const useAppStore = create<AppState>((set, get) => ({
     try {
       const record = await api.put<MaintenanceRecord>(`/records/${id}`, data);
       return record;
-    } catch (e: any) {
-      set({ error: e.message });
-      throw e;
-    } finally {
-      set({ loading: false });
-    }
-  },
-
-  deleteRecord: async (id: number) => {
-    set({ loading: true, error: null });
-    try {
-      await api.delete(`/records/${id}`);
     } catch (e: any) {
       set({ error: e.message });
       throw e;
@@ -370,6 +362,24 @@ export const useAppStore = create<AppState>((set, get) => ({
     }
   },
 
+  fetchAllFollowUps: async (filters?) => {
+    set({ loading: true, error: null });
+    try {
+      const params = new URLSearchParams();
+      if (filters?.status) params.append('status', filters.status);
+      if (filters?.dateFrom) params.append('dateFrom', filters.dateFrom);
+      if (filters?.dateTo) params.append('dateTo', filters.dateTo);
+      if (filters?.scheduledDateFrom) params.append('scheduledDateFrom', filters.scheduledDateFrom);
+      if (filters?.scheduledDateTo) params.append('scheduledDateTo', filters.scheduledDateTo);
+      const data = await api.get<FollowUpRecord[]>(`/follow-ups?${params}`);
+      set({ allFollowUps: data });
+    } catch (e: any) {
+      set({ error: e.message });
+    } finally {
+      set({ loading: false });
+    }
+  },
+
   fetchFollowUps: async (vehicleId: number) => {
     set({ loading: true, error: null });
     try {
@@ -386,7 +396,10 @@ export const useAppStore = create<AppState>((set, get) => ({
     set({ loading: true, error: null });
     try {
       const record = await api.post<FollowUpRecord>('/follow-ups', data);
-      set({ followUps: [record, ...get().followUps] });
+      set({
+        followUps: [record, ...get().followUps],
+        allFollowUps: [record, ...get().allFollowUps],
+      });
       return record;
     } catch (e: any) {
       set({ error: e.message });
@@ -402,6 +415,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       const record = await api.put<FollowUpRecord>(`/follow-ups/${id}`, data);
       set({
         followUps: get().followUps.map((f) => (f.id === id ? record : f)),
+        allFollowUps: get().allFollowUps.map((f) => (f.id === id ? record : f)),
       });
       return record;
     } catch (e: any) {
@@ -416,7 +430,38 @@ export const useAppStore = create<AppState>((set, get) => ({
     set({ loading: true, error: null });
     try {
       await api.delete(`/follow-ups/${id}`);
-      set({ followUps: get().followUps.filter((f) => f.id !== id) });
+      set({
+        followUps: get().followUps.filter((f) => f.id !== id),
+        allFollowUps: get().allFollowUps.filter((f) => f.id !== id),
+      });
+    } catch (e: any) {
+      set({ error: e.message });
+      throw e;
+    } finally {
+      set({ loading: false });
+    }
+  },
+
+  fetchRecordDetail: async (id: number) => {
+    set({ loading: true, error: null });
+    try {
+      const data = await api.get<MaintenanceRecord>(`/records/${id}`);
+      return data;
+    } catch (e: any) {
+      set({ error: e.message });
+      return null;
+    } finally {
+      set({ loading: false });
+    }
+  },
+
+  deleteRecord: async (id: number) => {
+    set({ loading: true, error: null });
+    try {
+      await api.delete(`/records/${id}`);
+      set({
+        records: get().records.filter((r) => r.id !== id),
+      });
     } catch (e: any) {
       set({ error: e.message });
       throw e;

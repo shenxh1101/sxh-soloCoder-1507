@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useEffect, useState, useRef } from 'react';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import {
   ArrowLeft,
   Car,
@@ -19,6 +19,8 @@ import {
   CheckCircle,
   CalendarCheck,
   XCircle,
+  Eye,
+  FileText,
 } from 'lucide-react';
 import { useAppStore } from '../store/useAppStore';
 import ConfirmDialog from '../components/ConfirmDialog';
@@ -27,6 +29,8 @@ import type { MaintenanceRecord, FollowUpRecord, FollowUpStatus } from '../../sh
 
 export default function VehicleDetail() {
   const { id } = useParams<{ id: string }>();
+  const [searchParams] = useSearchParams();
+  const recordId = searchParams.get('record');
   const navigate = useNavigate();
   const {
     fetchVehicleDetail,
@@ -35,9 +39,13 @@ export default function VehicleDetail() {
     addFollowUp,
     updateFollowUp,
     deleteFollowUp,
+    deleteRecord,
+    fetchRecordDetail,
     followUps,
     loading,
   } = useAppStore();
+  
+  const recordRefs = useRef<Map<number, HTMLDivElement>>(new Map());
 
   const [vehicle, setVehicle] = useState<any>(null);
   const [records, setRecords] = useState<MaintenanceRecord[]>([]);
@@ -51,12 +59,29 @@ export default function VehicleDetail() {
     status: 'called' as FollowUpStatus,
   });
   const [submittingFollowUp, setSubmittingFollowUp] = useState(false);
+  const [showRecordDetail, setShowRecordDetail] = useState(false);
+  const [selectedRecord, setSelectedRecord] = useState<MaintenanceRecord | null>(null);
+  const [showDeleteRecord, setShowDeleteRecord] = useState(false);
+  const [deletingRecordId, setDeletingRecordId] = useState<number | null>(null);
+  const [highlightedRecordId, setHighlightedRecordId] = useState<number | null>(null);
 
   useEffect(() => {
     if (id) {
       loadData(parseInt(id));
     }
   }, [id]);
+
+  useEffect(() => {
+    if (recordId && records.length > 0) {
+      const id = parseInt(recordId);
+      const recordEl = recordRefs.current.get(id);
+      if (recordEl) {
+        recordEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        setHighlightedRecordId(id);
+        setTimeout(() => setHighlightedRecordId(null), 3000);
+      }
+    }
+  }, [recordId, records]);
 
   const loadData = async (vehicleId: number) => {
     try {
@@ -67,6 +92,36 @@ export default function VehicleDetail() {
     } catch (e) {
       console.error(e);
     }
+  };
+
+  const handleViewRecord = async (recordId: number) => {
+    const record = await fetchRecordDetail(recordId);
+    if (record) {
+      setSelectedRecord(record);
+      setShowRecordDetail(true);
+    }
+  };
+
+  const handleDeleteRecord = async () => {
+    if (deletingRecordId === null) return;
+    try {
+      await deleteRecord(deletingRecordId);
+      if (id) {
+        loadData(parseInt(id));
+      }
+      setShowDeleteRecord(false);
+      setDeletingRecordId(null);
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const handlePrintRecord = (recordId: number) => {
+    window.open(`/print/${id}?mode=record&recordId=${recordId}`, '_blank');
+  };
+
+  const handlePrintAll = () => {
+    window.open(`/print/${id}?mode=vehicle`, '_blank');
   };
 
   const handleDelete = async () => {
@@ -159,10 +214,10 @@ export default function VehicleDetail() {
         <div className="flex gap-2 no-print">
           <button
             className="btn-secondary"
-            onClick={() => window.open(`/print/${id}`, '_blank')}
+            onClick={handlePrintAll}
           >
             <Printer className="w-4 h-4 mr-2" />
-            打印记录
+            打印全部
           </button>
           <button
             className="btn-secondary"
@@ -314,9 +369,18 @@ export default function VehicleDetail() {
                 {records.map((record, index) => (
                   <div
                     key={record.id}
-                    className="relative pl-8 pb-4 border-l-2 border-gray-200 last:border-0 last:pb-0"
+                    ref={(el) => {
+                      if (el) recordRefs.current.set(record.id, el);
+                    }}
+                    className={`relative pl-8 pb-4 border-l-2 border-gray-200 last:border-0 last:pb-0 transition-all ${
+                      highlightedRecordId === record.id
+                        ? 'bg-accent-50 -mx-2 px-2 rounded-xl'
+                        : ''
+                    }`}
                   >
-                    <div className="absolute -left-2 top-0 w-4 h-4 rounded-full bg-primary-500 ring-4 ring-white" />
+                    <div className={`absolute -left-2 top-0 w-4 h-4 rounded-full ring-4 ring-white ${
+                      highlightedRecordId === record.id ? 'bg-accent-500' : 'bg-primary-500'
+                    }`} />
                     <div className="bg-gray-50 rounded-xl p-4 hover:bg-gray-100 transition-colors">
                       <div className="flex items-start justify-between mb-3">
                         <div>
@@ -328,6 +392,7 @@ export default function VehicleDetail() {
                             {(record as any).isRework && (
                               <span className="badge-danger text-xs">返工</span>
                             )}
+                            <span className="text-xs text-gray-400">#{record.id}</span>
                           </div>
                           <p className="text-sm text-gray-500 flex items-center gap-1 mt-1">
                             <Gauge className="w-3 h-3" />
@@ -353,7 +418,7 @@ export default function VehicleDetail() {
                         </div>
                       </div>
 
-                      <div className="flex flex-wrap gap-2 mb-2">
+                      <div className="flex flex-wrap gap-2 mb-3">
                         {record.serviceItems?.map((item, idx) => (
                           <span
                             key={idx}
@@ -365,10 +430,37 @@ export default function VehicleDetail() {
                       </div>
 
                       {record.notes && (
-                        <p className="text-sm text-gray-500 bg-white p-2 rounded-lg">
+                        <p className="text-sm text-gray-500 bg-white p-2 rounded-lg mb-3">
                           备注：{record.notes}
                         </p>
                       )}
+                      
+                      <div className="flex items-center gap-2 no-print">
+                        <button
+                          className="btn-secondary btn-xs"
+                          onClick={() => handleViewRecord(record.id)}
+                        >
+                          <Eye className="w-3 h-3 mr-1" />
+                          查看
+                        </button>
+                        <button
+                          className="btn-secondary btn-xs"
+                          onClick={() => handlePrintRecord(record.id)}
+                        >
+                          <FileText className="w-3 h-3 mr-1" />
+                          打印
+                        </button>
+                        <button
+                          className="btn-danger btn-xs ml-auto"
+                          onClick={() => {
+                            setDeletingRecordId(record.id);
+                            setShowDeleteRecord(true);
+                          }}
+                        >
+                          <Trash2 className="w-3 h-3 mr-1" />
+                          删除
+                        </button>
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -559,6 +651,116 @@ export default function VehicleDetail() {
           </div>
         </div>
       </Modal>
+
+      <Modal
+        isOpen={showRecordDetail}
+        onClose={() => setShowRecordDetail(false)}
+        title="维修记录详情"
+      >
+        {selectedRecord && (
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-4 p-4 bg-gray-50 rounded-xl">
+              <div>
+                <p className="text-xs text-gray-500 mb-1">维修日期</p>
+                <p className="font-medium text-gray-900">
+                  {formatDate(selectedRecord.createdAt)}
+                </p>
+              </div>
+              <div>
+                <p className="text-xs text-gray-500 mb-1">记录编号</p>
+                <p className="font-medium text-gray-900">#{selectedRecord.id}</p>
+              </div>
+              <div>
+                <p className="text-xs text-gray-500 mb-1">维修里程</p>
+                <p className="font-medium text-gray-900">
+                  {selectedRecord.mileage?.toLocaleString()} km
+                </p>
+              </div>
+              <div>
+                <p className="text-xs text-gray-500 mb-1">维修师傅</p>
+                <p className="font-medium text-gray-900">
+                  {selectedRecord.mechanicName || '-'}
+                </p>
+              </div>
+              {(selectedRecord as any).durationMinutes && (
+                <div>
+                  <p className="text-xs text-gray-500 mb-1">维修用时</p>
+                  <p className="font-medium text-gray-900">
+                    {(selectedRecord as any).durationMinutes} 分钟
+                  </p>
+                </div>
+              )}
+              {(selectedRecord as any).isRework && (
+                <div>
+                  <p className="text-xs text-gray-500 mb-1">返工</p>
+                  <span className="badge-danger text-xs">是</span>
+                </div>
+              )}
+            </div>
+
+            <div>
+              <p className="text-sm font-medium text-gray-700 mb-2">维修项目</p>
+              <div className="space-y-2">
+                {selectedRecord.serviceItems?.map((item, idx) => (
+                  <div key={idx} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <span className="text-gray-900">{item.name}</span>
+                    <div className="text-sm text-gray-500">
+                      <span>×{item.quantity}</span>
+                      <span className="mx-2">·</span>
+                      <span>¥{item.price?.toLocaleString()}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {selectedRecord.notes && (
+              <div>
+                <p className="text-sm font-medium text-gray-700 mb-2">备注</p>
+                <p className="text-gray-600 p-3 bg-gray-50 rounded-lg">
+                  {selectedRecord.notes}
+                </p>
+              </div>
+            )}
+
+            <div className="flex items-center justify-between p-4 bg-accent-50 rounded-xl">
+              <span className="text-gray-600">费用合计</span>
+              <span className="text-2xl font-bold text-accent-600">
+                ¥{selectedRecord.totalCost?.toLocaleString()}
+              </span>
+            </div>
+
+            <div className="flex justify-end gap-3 pt-2 border-t border-gray-100">
+              <button
+                className="btn-secondary"
+                onClick={() => {
+                  handlePrintRecord(selectedRecord.id);
+                  setShowRecordDetail(false);
+                }}
+              >
+                <Printer className="w-4 h-4 mr-2" />
+                打印
+              </button>
+              <button
+                className="btn-primary"
+                onClick={() => setShowRecordDetail(false)}
+              >
+                关闭
+              </button>
+            </div>
+          </div>
+        )}
+      </Modal>
+
+      <ConfirmDialog
+        isOpen={showDeleteRecord}
+        onClose={() => setShowDeleteRecord(false)}
+        onConfirm={handleDeleteRecord}
+        title="删除维修记录"
+        message="确定要删除这条维修记录吗？此操作不可撤销。"
+        type="danger"
+        confirmText="删除"
+      />
     </div>
   );
 }

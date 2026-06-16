@@ -172,7 +172,7 @@ export default function RecordForm() {
         durationMinutes: durationMinutes ? parseInt(durationMinutes) : null,
         isRework,
       });
-      navigate(`/vehicles/${vehicleId}#record-${newRecord.id}`);
+      navigate(`/vehicles/${vehicleId}?record=${newRecord.id}`);
     } catch (e: any) {
       setError(e.message);
     }

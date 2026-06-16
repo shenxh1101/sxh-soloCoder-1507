@@ -7,6 +7,7 @@ import VehicleForm from "@/pages/VehicleForm";
 import RecordList from "@/pages/RecordList";
 import RecordForm from "@/pages/RecordForm";
 import ReminderList from "@/pages/ReminderList";
+import FollowUpCenter from "@/pages/FollowUpCenter";
 import Statistics from "@/pages/Statistics";
 import SettingsPage from "@/pages/SettingsPage";
 import PrintPage from "@/pages/PrintPage";
@@ -25,6 +26,7 @@ export default function App() {
           <Route path="/records" element={<RecordList />} />
           <Route path="/records/new" element={<RecordForm />} />
           <Route path="/reminders" element={<ReminderList />} />
+          <Route path="/follow-ups" element={<FollowUpCenter />} />
           <Route path="/statistics" element={<Statistics />} />
           <Route path="/settings" element={<SettingsPage />} />
         </Route>

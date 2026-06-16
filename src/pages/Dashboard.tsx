@@ -10,27 +10,41 @@ import {
   AlertCircle,
   Clock,
   X,
+  Calendar,
+  CalendarCheck,
+  CheckCircle,
+  User,
+  PhoneCall,
 } from 'lucide-react';
+import Modal from '../components/Modal';
+import type { Reminder, FollowUpRecord, FollowUpStatus } from '../../shared/types';
 import StatCard from '../components/StatCard';
 import { useAppStore } from '../store/useAppStore';
-import type { Reminder } from '../../shared/types';
 
 export default function Dashboard() {
   const navigate = useNavigate();
   const {
     dashboardStats,
     reminders,
+    allFollowUps,
     fetchDashboardStats,
     fetchReminders,
+    fetchAllFollowUps,
     updateReminderStatus,
     addFollowUp,
+    updateFollowUp,
   } = useAppStore();
   const [showReminderModal, setShowReminderModal] = useState(false);
+  const [showScheduleModal, setShowScheduleModal] = useState(false);
+  const [currentReminder, setCurrentReminder] = useState<Reminder | null>(null);
+  const [scheduleDate, setScheduleDate] = useState('');
+  const [scheduleTime, setScheduleTime] = useState('');
 
   useEffect(() => {
     fetchDashboardStats();
     fetchReminders('pending');
-  }, [fetchDashboardStats, fetchReminders]);
+    fetchAllFollowUps({ status: 'scheduled' });
+  }, [fetchDashboardStats, fetchReminders, fetchAllFollowUps]);
 
   useEffect(() => {
     if (reminders.length > 0) {
@@ -48,33 +62,106 @@ export default function Dashboard() {
 
   const pendingReminders = reminders.slice(0, 5);
 
-  const handleCall = async (reminder: Reminder) => {
+  const getScheduledFollowUps = (dateStr: string) => {
+    const targetDate = new Date(dateStr);
+    targetDate.setHours(0, 0, 0, 0);
+    const nextDay = new Date(targetDate);
+    nextDay.setDate(nextDay.getDate() + 1);
+    
+    return allFollowUps.filter((f) => {
+      if (!f.scheduledDate || f.status !== 'scheduled') return false;
+      const scheduled = new Date(f.scheduledDate);
+      return scheduled >= targetDate && scheduled < nextDay;
+    });
+  };
+
+  const isOverdue = (scheduledDate?: string | null) => {
+    if (!scheduledDate) return false;
+    const scheduled = new Date(scheduledDate);
+    const now = new Date();
+    return scheduled < now;
+  };
+
+  const formatTime = (dateStr: string) => {
+    return new Date(dateStr).toLocaleTimeString('zh-CN', {
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  };
+
+  const formatDateTime = (dateStr: string) => {
+    return new Date(dateStr).toLocaleString('zh-CN', {
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  };
+
+  const getTomorrow = () => {
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    return tomorrow.toISOString().split('T')[0];
+  };
+
+  const handleCall = (reminder: Reminder) => {
     if (reminder.vehicle?.ownerPhone) {
       window.location.href = `tel:${reminder.vehicle.ownerPhone}`;
-      
-      const notifiedToday = JSON.parse(localStorage.getItem('notifiedRemindersToday') || '[]');
-      if (!notifiedToday.includes(reminder.id)) {
-        notifiedToday.push(reminder.id);
-        localStorage.setItem('notifiedRemindersToday', JSON.stringify(notifiedToday));
-      }
+    }
+    setCurrentReminder(reminder);
+    setScheduleDate('');
+    setScheduleTime('');
+    setShowScheduleModal(true);
+  };
 
-      try {
-        await Promise.all([
-          updateReminderStatus(reminder.id, 'notified'),
-          addFollowUp({
-            vehicleId: reminder.vehicleId,
-            type: '电话联系',
-            content: '通过保养提醒页面电话联系客户，提醒车辆保养。',
-            status: 'called',
-            source: '首页弹窗',
-          }),
-        ]);
-        
-        fetchReminders('pending');
-        fetchDashboardStats();
-      } catch (e) {
-        console.error(e);
-      }
+  const handleCompleteCall = async () => {
+    if (!currentReminder) return;
+    
+    const notifiedToday = JSON.parse(localStorage.getItem('notifiedRemindersToday') || '[]');
+    if (!notifiedToday.includes(currentReminder.id)) {
+      notifiedToday.push(currentReminder.id);
+      localStorage.setItem('notifiedRemindersToday', JSON.stringify(notifiedToday));
+    }
+
+    const scheduledDateTime = scheduleDate && scheduleTime
+      ? `${scheduleDate}T${scheduleTime}:00`
+      : scheduleDate
+      ? `${scheduleDate}T09:00:00`
+      : null;
+
+    const status: FollowUpStatus = scheduledDateTime ? 'scheduled' : 'called';
+
+    try {
+      await Promise.all([
+        updateReminderStatus(currentReminder.id, 'notified'),
+        addFollowUp({
+          vehicleId: currentReminder.vehicleId,
+          type: '电话联系',
+          content: scheduledDateTime
+            ? `电话联系客户，提醒车辆保养，已预约到店时间。`
+            : '电话联系客户，提醒车辆保养，暂未预约到店时间。',
+          scheduledDate: scheduledDateTime,
+          status,
+          source: '首页弹窗',
+        }),
+      ]);
+      
+      fetchReminders('pending');
+      fetchDashboardStats();
+      fetchAllFollowUps({ status: 'scheduled' });
+      setShowScheduleModal(false);
+      setCurrentReminder(null);
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const handleMarkArrived = async (record: FollowUpRecord) => {
+    try {
+      await updateFollowUp(record.id, { status: 'arrived' });
+      fetchAllFollowUps({ status: 'scheduled' });
+    } catch (e) {
+      console.error(e);
     }
   };
 
@@ -146,7 +233,117 @@ export default function Dashboard() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2">
+        <div className="lg:col-span-2 space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="card p-6">
+              <div className="flex items-center gap-2 mb-4">
+                <div className="w-8 h-8 bg-accent-100 rounded-lg flex items-center justify-center">
+                  <CalendarCheck className="w-4 h-4 text-accent-600" />
+                </div>
+                <h3 className="font-semibold text-gray-900">今日预约</h3>
+              </div>
+              {getScheduledFollowUps(new Date().toISOString().split('T')[0]).length === 0 ? (
+                <div className="text-center py-6 text-gray-400">
+                  <Calendar className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                  <p className="text-sm">今日暂无预约</p>
+                </div>
+              ) : (
+                <div className="space-y-3 max-h-64 overflow-y-auto">
+                  {getScheduledFollowUps(new Date().toISOString().split('T')[0]).map((record) => (
+                    <div
+                      key={record.id}
+                      className={`p-3 rounded-lg border ${
+                        isOverdue(record.scheduledDate)
+                          ? 'bg-danger-50 border-danger-200'
+                          : 'bg-gray-50 border-gray-200'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between mb-1">
+                        <div className="flex items-center gap-2">
+                          <Car className="w-4 h-4 text-primary-500" />
+                          <span className="font-medium text-gray-900">
+                            {record.vehicle?.plateNumber}
+                          </span>
+                        </div>
+                        {isOverdue(record.scheduledDate) && (
+                          <span className="text-xs text-danger-600 font-medium">已超时</span>
+                        )}
+                      </div>
+                      <div className="text-xs text-gray-500 mb-2 flex items-center gap-2">
+                        <User className="w-3 h-3" />
+                        {record.vehicle?.ownerName}
+                        <span className="text-gray-300">·</span>
+                        <Clock className="w-3 h-3" />
+                        {formatTime(record.scheduledDate!)}
+                      </div>
+                      <div className="flex gap-2">
+                        <button
+                          className="btn-success btn-xs flex-1"
+                          onClick={() => handleMarkArrived(record)}
+                        >
+                          <CheckCircle className="w-3 h-3 mr-1" />
+                          已到店
+                        </button>
+                        <button
+                          className="btn-secondary btn-xs"
+                          onClick={() => navigate(`/vehicles/${record.vehicleId}`)}
+                        >
+                          详情
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="card p-6">
+              <div className="flex items-center gap-2 mb-4">
+                <div className="w-8 h-8 bg-primary-100 rounded-lg flex items-center justify-center">
+                  <Calendar className="w-4 h-4 text-primary-600" />
+                </div>
+                <h3 className="font-semibold text-gray-900">明日预约</h3>
+              </div>
+              {getScheduledFollowUps(getTomorrow()).length === 0 ? (
+                <div className="text-center py-6 text-gray-400">
+                  <Calendar className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                  <p className="text-sm">明日暂无预约</p>
+                </div>
+              ) : (
+                <div className="space-y-3 max-h-64 overflow-y-auto">
+                  {getScheduledFollowUps(getTomorrow()).map((record) => (
+                    <div
+                      key={record.id}
+                      className="p-3 rounded-lg bg-gray-50 border border-gray-200"
+                    >
+                      <div className="flex items-center justify-between mb-1">
+                        <div className="flex items-center gap-2">
+                          <Car className="w-4 h-4 text-primary-500" />
+                          <span className="font-medium text-gray-900">
+                            {record.vehicle?.plateNumber}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="text-xs text-gray-500 mb-2 flex items-center gap-2">
+                        <User className="w-3 h-3" />
+                        {record.vehicle?.ownerName}
+                        <span className="text-gray-300">·</span>
+                        <Clock className="w-3 h-3" />
+                        {formatTime(record.scheduledDate!)}
+                      </div>
+                      <button
+                        className="btn-secondary btn-xs w-full"
+                        onClick={() => navigate(`/vehicles/${record.vehicleId}`)}
+                      >
+                        查看详情
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+
           <div className="card p-6">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-semibold text-gray-900">
@@ -351,6 +548,79 @@ export default function Dashboard() {
             </div>
           </div>
         </div>
+      )}
+
+      {showScheduleModal && currentReminder && (
+        <Modal
+          isOpen={showScheduleModal}
+          onClose={() => setShowScheduleModal(false)}
+          title="预约到店时间"
+        >
+          <div className="space-y-4">
+            <div className="p-4 bg-primary-50 rounded-xl">
+              <div className="flex items-center gap-2 mb-2">
+                <Car className="w-5 h-5 text-primary-600" />
+                <span className="font-semibold text-gray-900">
+                  {currentReminder.vehicle?.plateNumber}
+                </span>
+              </div>
+              <div className="text-sm text-gray-600">
+                <User className="w-4 h-4 inline mr-1" />
+                {currentReminder.vehicle?.ownerName}
+                <span className="mx-2 text-gray-300">·</span>
+                <Phone className="w-4 h-4 inline mr-1" />
+                {currentReminder.vehicle?.ownerPhone}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  预约日期
+                </label>
+                <input
+                  type="date"
+                  className="input w-full"
+                  value={scheduleDate}
+                  min={new Date().toISOString().split('T')[0]}
+                  onChange={(e) => setScheduleDate(e.target.value)}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  预约时间
+                </label>
+                <input
+                  type="time"
+                  className="input w-full"
+                  value={scheduleTime}
+                  onChange={(e) => setScheduleTime(e.target.value)}
+                />
+              </div>
+            </div>
+
+            <div className="text-sm text-gray-500 bg-gray-50 p-3 rounded-lg">
+              <p className="flex items-start gap-2">
+                <PhoneCall className="w-4 h-4 mt-0.5 text-primary-500 flex-shrink-0" />
+                <span>
+                  已自动拨打电话联系客户。请在上方选择预约到店时间，或直接确认无需预约。
+                </span>
+              </p>
+            </div>
+
+            <div className="flex justify-end gap-3 pt-2">
+              <button
+                className="btn-secondary"
+                onClick={() => setShowScheduleModal(false)}
+              >
+                取消
+              </button>
+              <button className="btn-primary" onClick={handleCompleteCall}>
+                {scheduleDate ? '确认预约' : '暂不预约'}
+              </button>
+            </div>
+          </div>
+        </Modal>
       )}
     </div>
   );

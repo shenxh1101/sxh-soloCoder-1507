@@ -8,9 +8,12 @@ import {
   CalendarClock,
   Car,
   AlertTriangle,
+  User,
+  PhoneCall,
 } from 'lucide-react';
 import { useAppStore } from '../store/useAppStore';
-import type { Reminder, ReminderStatus } from '../../shared/types';
+import Modal from '../components/Modal';
+import type { Reminder, ReminderStatus, FollowUpStatus } from '../../shared/types';
 
 export default function ReminderList() {
   const navigate = useNavigate();
@@ -23,37 +26,62 @@ export default function ReminderList() {
     addFollowUp,
   } = useAppStore();
   const [filter, setFilter] = useState<ReminderStatus | 'all'>('all');
+  const [showScheduleModal, setShowScheduleModal] = useState(false);
+  const [currentReminder, setCurrentReminder] = useState<Reminder | null>(null);
+  const [scheduleDate, setScheduleDate] = useState('');
+  const [scheduleTime, setScheduleTime] = useState('');
 
   useEffect(() => {
     fetchReminders(filter === 'all' ? undefined : filter);
   }, [filter, fetchReminders]);
 
-  const handleCall = async (reminder: Reminder) => {
+  const handleCall = (reminder: Reminder) => {
     if (reminder.vehicle?.ownerPhone) {
       window.location.href = `tel:${reminder.vehicle.ownerPhone}`;
+    }
+    setCurrentReminder(reminder);
+    setScheduleDate('');
+    setScheduleTime('');
+    setShowScheduleModal(true);
+  };
 
-      const notifiedToday = JSON.parse(localStorage.getItem('notifiedRemindersToday') || '[]');
-      if (!notifiedToday.includes(reminder.id)) {
-        notifiedToday.push(reminder.id);
-        localStorage.setItem('notifiedRemindersToday', JSON.stringify(notifiedToday));
-      }
+  const handleCompleteCall = async () => {
+    if (!currentReminder) return;
+    
+    const notifiedToday = JSON.parse(localStorage.getItem('notifiedRemindersToday') || '[]');
+    if (!notifiedToday.includes(currentReminder.id)) {
+      notifiedToday.push(currentReminder.id);
+      localStorage.setItem('notifiedRemindersToday', JSON.stringify(notifiedToday));
+    }
 
-      try {
-        await Promise.all([
-          updateReminderStatus(reminder.id, 'notified'),
-          addFollowUp({
-            vehicleId: reminder.vehicleId,
-            type: '电话联系',
-            content: '通过保养提醒页面电话联系客户，提醒车辆保养。',
-            status: 'called',
-            source: '保养提醒页',
-          }),
-        ]);
+    const scheduledDateTime = scheduleDate && scheduleTime
+      ? `${scheduleDate}T${scheduleTime}:00`
+      : scheduleDate
+      ? `${scheduleDate}T09:00:00`
+      : null;
 
-        fetchReminders(filter === 'all' ? undefined : filter);
-      } catch (e) {
-        console.error(e);
-      }
+    const status: FollowUpStatus = scheduledDateTime ? 'scheduled' : 'called';
+
+    try {
+      await Promise.all([
+        updateReminderStatus(currentReminder.id, 'notified'),
+        addFollowUp({
+          vehicleId: currentReminder.vehicleId,
+          type: '电话联系',
+          content: scheduledDateTime
+            ? `电话联系客户，提醒车辆保养，已预约到店时间。`
+            : '电话联系客户，提醒车辆保养，暂未预约到店时间。',
+          scheduledDate: scheduledDateTime,
+          status,
+          source: '保养提醒页',
+        }),
+      ]);
+      
+      fetchReminders(filter === 'all' ? undefined : filter);
+      setShowScheduleModal(false);
+      setCurrentReminder(null);
+    } catch (e) {
+      console.error(e);
     }
   };
 
@@ -264,6 +292,79 @@ export default function ReminderList() {
             );
           })}
         </div>
+      )}
+
+      {showScheduleModal && currentReminder && (
+        <Modal
+          isOpen={showScheduleModal}
+          onClose={() => setShowScheduleModal(false)}
+          title="预约到店时间"
+        >
+          <div className="space-y-4">
+            <div className="p-4 bg-primary-50 rounded-xl">
+              <div className="flex items-center gap-2 mb-2">
+                <Car className="w-5 h-5 text-primary-600" />
+                <span className="font-semibold text-gray-900">
+                  {currentReminder.vehicle?.plateNumber}
+                </span>
+              </div>
+              <div className="text-sm text-gray-600">
+                <User className="w-4 h-4 inline mr-1" />
+                {currentReminder.vehicle?.ownerName}
+                <span className="mx-2 text-gray-300">·</span>
+                <Phone className="w-4 h-4 inline mr-1" />
+                {currentReminder.vehicle?.ownerPhone}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  预约日期
+                </label>
+                <input
+                  type="date"
+                  className="input w-full"
+                  value={scheduleDate}
+                  min={new Date().toISOString().split('T')[0]}
+                  onChange={(e) => setScheduleDate(e.target.value)}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  预约时间
+                </label>
+                <input
+                  type="time"
+                  className="input w-full"
+                  value={scheduleTime}
+                  onChange={(e) => setScheduleTime(e.target.value)}
+                />
+              </div>
+            </div>
+
+            <div className="text-sm text-gray-500 bg-gray-50 p-3 rounded-lg">
+              <p className="flex items-start gap-2">
+                <PhoneCall className="w-4 h-4 mt-0.5 text-primary-500 flex-shrink-0" />
+                <span>
+                  已自动拨打电话联系客户。请在上方选择预约到店时间，或直接确认无需预约。
+                </span>
+              </p>
+            </div>
+
+            <div className="flex justify-end gap-3 pt-2">
+              <button
+                className="btn-secondary"
+                onClick={() => setShowScheduleModal(false)}
+              >
+                取消
+              </button>
+              <button className="btn-primary" onClick={handleCompleteCall}>
+                {scheduleDate ? '确认预约' : '暂不预约'}
+              </button>
+            </div>
+          </div>
+        </Modal>
       )}
     </div>
   );

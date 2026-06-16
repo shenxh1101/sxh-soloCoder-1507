@@ -7,6 +7,7 @@ import {
   BarChart3,
   Settings,
   WrenchIcon,
+  PhoneCall,
 } from 'lucide-react';
 import { useAppStore } from '../store/useAppStore';
 import { useEffect } from 'react';
@@ -17,6 +18,7 @@ const navItems = [
   { path: '/vehicles', label: '车辆管理', icon: Car },
   { path: '/records', label: '维修记录', icon: Wrench },
   { path: '/reminders', label: '保养提醒', icon: Bell },
+  { path: '/follow-ups', label: '回访中心', icon: PhoneCall },
   { path: '/statistics', label: '统计报表', icon: BarChart3 },
   { path: '/settings', label: '系统设置', icon: Settings },
 ];

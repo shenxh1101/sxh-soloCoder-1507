@@ -42,11 +42,13 @@ export type FollowUpStatus = 'called' | 'scheduled' | 'arrived' | 'cancelled';
 export interface FollowUpRecord {
   id: number;
   vehicleId: number;
+  vehicle?: Vehicle;
   type: string;
   content: string;
   scheduledDate?: string | null;
   status: FollowUpStatus;
   source?: string;
+  arrivedAt?: string | null;
   createdAt: string;
   createdBy: string;
 }
