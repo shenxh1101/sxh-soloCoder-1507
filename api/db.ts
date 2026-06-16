@@ -63,8 +63,21 @@ export function loadDB(): Database {
     return { ...defaultDB };
   }
   try {
-    const data = fs.readFileSync(DB_FILE, 'utf-8');
-    return JSON.parse(data);
+    let data = fs.readFileSync(DB_FILE, 'utf-8');
+    if (data.charCodeAt(0) === 0xFEFF) {
+      data = data.slice(1);
+    }
+    const db = JSON.parse(data);
+    
+    db.nextIds = db.nextIds || { ...defaultDB.nextIds };
+    db.nextIds.vehicles = Math.max(db.nextIds.vehicles || 1, ...db.vehicles.map((v: any) => v.id), 0) + 1;
+    db.nextIds.maintenanceRecords = Math.max(db.nextIds.maintenanceRecords || 1, ...db.maintenanceRecords.map((r: any) => r.id), 0) + 1;
+    db.nextIds.serviceItems = Math.max(db.nextIds.serviceItems || 1, ...db.serviceItems.map((i: any) => i.id), 0) + 1;
+    db.nextIds.mechanics = Math.max(db.nextIds.mechanics || 1, ...db.mechanics.map((m: any) => m.id), 0) + 1;
+    db.nextIds.reminders = Math.max(db.nextIds.reminders || 1, ...db.reminders.map((r: any) => r.id), 0) + 1;
+    db.nextIds.followUpRecords = Math.max(db.nextIds.followUpRecords || 1, ...(db.followUpRecords || []).map((f: any) => f.id), 0) + 1;
+    
+    return db;
   } catch (e) {
     console.error('Failed to load database, using default', e);
     return { ...defaultDB };
@@ -73,7 +86,9 @@ export function loadDB(): Database {
 
 export function saveDB(db: Database) {
   ensureDataDir();
-  fs.writeFileSync(DB_FILE, JSON.stringify(db, null, 2), 'utf-8');
+  const jsonStr = JSON.stringify(db, null, 2);
+  const utf8Bom = '\uFEFF';
+  fs.writeFileSync(DB_FILE, utf8Bom + jsonStr, 'utf-8');
 }
 
 export function getNextId(table: keyof Database['nextIds']): number {

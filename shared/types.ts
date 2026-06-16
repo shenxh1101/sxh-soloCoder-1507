@@ -46,6 +46,7 @@ export interface FollowUpRecord {
   content: string;
   scheduledDate?: string | null;
   status: FollowUpStatus;
+  source?: string;
   createdAt: string;
   createdBy: string;
 }

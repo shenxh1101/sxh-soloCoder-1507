@@ -421,6 +421,11 @@ export default function VehicleDetail() {
                         预约时间：{formatDate(followUp.scheduledDate)}
                       </p>
                     )}
+                    {(followUp as any).source && (
+                      <p className="text-xs text-gray-400 mt-1">
+                        来源：{(followUp as any).source}
+                      </p>
+                    )}
                     <div className="flex items-center gap-2 mt-3">
                       {followUp.status !== 'arrived' && (
                         <button

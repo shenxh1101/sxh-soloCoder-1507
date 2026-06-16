@@ -154,7 +154,7 @@ export default function RecordForm() {
     const selectedMechanic = mechanics.find((m) => m.id === mechanicId);
 
     try {
-      await addRecord({
+      const newRecord = await addRecord({
         vehicleId,
         mileage: parseInt(mileage),
         serviceItems: serviceItems.map((item) => ({
@@ -172,7 +172,7 @@ export default function RecordForm() {
         durationMinutes: durationMinutes ? parseInt(durationMinutes) : null,
         isRework,
       });
-      navigate('/records');
+      navigate(`/vehicles/${vehicleId}#record-${newRecord.id}`);
     } catch (e: any) {
       setError(e.message);
     }

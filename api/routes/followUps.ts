@@ -47,7 +47,7 @@ router.get('/vehicle/:vehicleId', (req, res) => {
 });
 
 router.post('/', (req, res) => {
-  const { vehicleId, type, content, scheduledDate, status } = req.body;
+  const { vehicleId, type, content, scheduledDate, status, source } = req.body;
 
   if (!vehicleId || !type || !content) {
     return res.status(400).json({ error: '缺少必要字段' });
@@ -62,6 +62,7 @@ router.post('/', (req, res) => {
     content,
     scheduled_date: scheduledDate || null,
     status: status || 'called',
+    source: source || null,
     created_at: now,
     created_by: '管理员',
   };

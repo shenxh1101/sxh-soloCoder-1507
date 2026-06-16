@@ -23,6 +23,7 @@ export default function Dashboard() {
     fetchDashboardStats,
     fetchReminders,
     updateReminderStatus,
+    addFollowUp,
   } = useAppStore();
   const [showReminderModal, setShowReminderModal] = useState(false);
 
@@ -47,15 +48,32 @@ export default function Dashboard() {
 
   const pendingReminders = reminders.slice(0, 5);
 
-  const handleCall = (reminder: Reminder) => {
+  const handleCall = async (reminder: Reminder) => {
     if (reminder.vehicle?.ownerPhone) {
       window.location.href = `tel:${reminder.vehicle.ownerPhone}`;
-      updateReminderStatus(reminder.id, 'notified');
-
+      
       const notifiedToday = JSON.parse(localStorage.getItem('notifiedRemindersToday') || '[]');
       if (!notifiedToday.includes(reminder.id)) {
         notifiedToday.push(reminder.id);
         localStorage.setItem('notifiedRemindersToday', JSON.stringify(notifiedToday));
+      }
+
+      try {
+        await Promise.all([
+          updateReminderStatus(reminder.id, 'notified'),
+          addFollowUp({
+            vehicleId: reminder.vehicleId,
+            type: '电话联系',
+            content: '通过保养提醒页面电话联系客户，提醒车辆保养。',
+            status: 'called',
+            source: '首页弹窗',
+          }),
+        ]);
+        
+        fetchReminders('pending');
+        fetchDashboardStats();
+      } catch (e) {
+        console.error(e);
       }
     }
   };
@@ -280,7 +298,12 @@ export default function Dashboard() {
               </button>
             </div>
             <div className="p-5 space-y-3 overflow-y-auto max-h-[50vh]">
-              {reminders.map((reminder) => (
+              {reminders
+                .filter((r) => {
+                  const notifiedToday = JSON.parse(localStorage.getItem('notifiedRemindersToday') || '[]');
+                  return !notifiedToday.includes(r.id);
+                })
+                .map((reminder) => (
                 <div
                   key={reminder.id}
                   className="p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors"

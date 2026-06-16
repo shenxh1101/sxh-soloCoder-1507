@@ -14,18 +14,46 @@ import type { Reminder, ReminderStatus } from '../../shared/types';
 
 export default function ReminderList() {
   const navigate = useNavigate();
-  const { reminders, remindersTotal, fetchReminders, updateReminderStatus, postponeReminder } =
-    useAppStore();
+  const {
+    reminders,
+    remindersTotal,
+    fetchReminders,
+    updateReminderStatus,
+    postponeReminder,
+    addFollowUp,
+  } = useAppStore();
   const [filter, setFilter] = useState<ReminderStatus | 'all'>('all');
 
   useEffect(() => {
     fetchReminders(filter === 'all' ? undefined : filter);
   }, [filter, fetchReminders]);
 
-  const handleCall = (reminder: Reminder) => {
+  const handleCall = async (reminder: Reminder) => {
     if (reminder.vehicle?.ownerPhone) {
       window.location.href = `tel:${reminder.vehicle.ownerPhone}`;
-      updateReminderStatus(reminder.id, 'notified');
+
+      const notifiedToday = JSON.parse(localStorage.getItem('notifiedRemindersToday') || '[]');
+      if (!notifiedToday.includes(reminder.id)) {
+        notifiedToday.push(reminder.id);
+        localStorage.setItem('notifiedRemindersToday', JSON.stringify(notifiedToday));
+      }
+
+      try {
+        await Promise.all([
+          updateReminderStatus(reminder.id, 'notified'),
+          addFollowUp({
+            vehicleId: reminder.vehicleId,
+            type: '电话联系',
+            content: '通过保养提醒页面电话联系客户，提醒车辆保养。',
+            status: 'called',
+            source: '保养提醒页',
+          }),
+        ]);
+
+        fetchReminders(filter === 'all' ? undefined : filter);
+      } catch (e) {
+        console.error(e);
+      }
     }
   };
 

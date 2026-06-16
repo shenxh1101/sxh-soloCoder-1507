@@ -73,10 +73,11 @@ export default function VehicleForm() {
     try {
       if (isEdit && id) {
         await updateVehicle(parseInt(id), formData);
+        navigate(`/vehicles/${id}`);
       } else {
-        await addVehicle(formData);
+        const newVehicle = await addVehicle(formData);
+        navigate(`/vehicles/${newVehicle.id}`);
       }
-      navigate('/vehicles');
     } catch (e: any) {
       setError(e.message);
     }
