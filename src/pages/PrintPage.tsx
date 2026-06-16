@@ -1,0 +1,266 @@
+import { useEffect, useState } from 'react';
+import { useParams } from 'react-router-dom';
+import {
+  Car,
+  Phone,
+  Gauge,
+  Calendar,
+  Wrench,
+  User,
+  MapPin,
+  Building,
+  Printer,
+} from 'lucide-react';
+
+interface VehicleData {
+  vehicle: any;
+  records: any[];
+  settings: any;
+}
+
+export default function PrintPage() {
+  const { id } = useParams<{ id: string }>();
+  const [data, setData] = useState<VehicleData | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (id) {
+      loadData(parseInt(id));
+    }
+  }, [id]);
+
+  const loadData = async (vehicleId: number) => {
+    try {
+      const [vehicleRes, settingsRes] = await Promise.all([
+        fetch(`/api/vehicles/${vehicleId}`),
+        fetch('/api/settings'),
+      ]);
+      const vehicleData = await vehicleRes.json();
+      const settingsData = await settingsRes.json();
+      setData({
+        vehicle: vehicleData.vehicle,
+        records: vehicleData.records || [],
+        settings: settingsData,
+      });
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const formatDate = (dateStr: string) => {
+    return new Date(dateStr).toLocaleDateString('zh-CN', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    });
+  };
+
+  const handlePrint = () => {
+    window.print();
+  };
+
+  if (loading || !data) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="text-gray-400">加载中...</div>
+      </div>
+    );
+  }
+
+  const { vehicle, records, settings } = data;
+  const totalSpent = records.reduce((sum, r) => sum + (r.totalCost || 0), 0);
+
+  return (
+    <div className="min-h-screen bg-white">
+      <div className="no-print fixed top-4 right-4 z-50">
+        <button className="btn-primary" onClick={handlePrint}>
+          <Printer className="w-4 h-4 mr-2" />
+          打印
+        </button>
+      </div>
+
+      <div className="max-w-3xl mx-auto p-8">
+        <div className="text-center mb-8 pb-6 border-b-2 border-gray-200">
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">
+            {settings.shopName || '汽修店'}
+          </h1>
+          <div className="text-sm text-gray-500 space-y-1">
+            {settings.shopAddress && (
+              <p className="flex items-center justify-center gap-1">
+                <MapPin className="w-3 h-3" />
+                {settings.shopAddress}
+              </p>
+            )}
+            {settings.shopPhone && (
+              <p className="flex items-center justify-center gap-1">
+                <Phone className="w-3 h-3" />
+                {settings.shopPhone}
+              </p>
+            )}
+          </div>
+        </div>
+
+        <h2 className="text-xl font-bold text-center text-gray-900 mb-6">
+          车辆保养记录单
+        </h2>
+
+        <div className="bg-gray-50 rounded-xl p-6 mb-6">
+          <div className="flex items-start gap-6">
+            <div className="w-16 h-16 bg-primary-100 rounded-2xl flex items-center justify-center">
+              <Car className="w-8 h-8 text-primary-600" />
+            </div>
+            <div className="flex-1 grid grid-cols-2 gap-4">
+              <div>
+                <p className="text-sm text-gray-500">车牌号</p>
+                <p className="text-lg font-bold text-gray-900">
+                  {vehicle.plateNumber}
+                </p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-500">车主</p>
+                <p className="text-lg font-semibold text-gray-900">
+                  {vehicle.ownerName}
+                </p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-500">联系电话</p>
+                <p className="text-gray-700">{vehicle.ownerPhone}</p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-500">车型</p>
+                <p className="text-gray-700">
+                  {vehicle.carModel || '未填写'}
+                </p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-500">当前里程</p>
+                <p className="text-gray-700 flex items-center gap-1">
+                  <Gauge className="w-4 h-4" />
+                  {vehicle.currentMileage?.toLocaleString()} km
+                </p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-500">下次保养</p>
+                <p className="text-primary-600 font-semibold">
+                  {vehicle.nextMaintenanceMileage
+                    ? `${vehicle.nextMaintenanceMileage.toLocaleString()} km`
+                    : '暂无记录'}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="mb-6">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+            <Wrench className="w-5 h-5 text-accent-600" />
+            维修历史记录
+          </h3>
+
+          {records.length === 0 ? (
+            <div className="text-center py-8 text-gray-400 border border-dashed border-gray-200 rounded-xl">
+              暂无维修记录
+            </div>
+          ) : (
+            <table className="w-full text-sm border-collapse">
+              <thead>
+                <tr className="bg-gray-100">
+                  <th className="text-left p-3 font-medium text-gray-700 border border-gray-200">
+                    日期
+                  </th>
+                  <th className="text-left p-3 font-medium text-gray-700 border border-gray-200">
+                    里程
+                  </th>
+                  <th className="text-left p-3 font-medium text-gray-700 border border-gray-200">
+                    维修项目
+                  </th>
+                  <th className="text-left p-3 font-medium text-gray-700 border border-gray-200">
+                    维修师傅
+                  </th>
+                  <th className="text-right p-3 font-medium text-gray-700 border border-gray-200">
+                    费用
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {records.map((record) => (
+                  <tr key={record.id}>
+                    <td className="p-3 border border-gray-200">
+                      {formatDate(record.createdAt)}
+                    </td>
+                    <td className="p-3 border border-gray-200">
+                      {record.mileage?.toLocaleString()} km
+                    </td>
+                    <td className="p-3 border border-gray-200">
+                      {record.serviceItems
+                        ?.map((item: any) => `${item.name}×${item.quantity}`)
+                        .join('、')}
+                    </td>
+                    <td className="p-3 border border-gray-200">
+                      {record.mechanicName || '-'}
+                    </td>
+                    <td className="p-3 text-right border border-gray-200 font-semibold">
+                      ¥{record.totalCost?.toLocaleString()}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+              <tfoot>
+                <tr className="bg-gray-50 font-semibold">
+                  <td colSpan={4} className="p-3 text-right border border-gray-200">
+                    累计消费
+                  </td>
+                  <td className="p-3 text-right border border-gray-200 text-accent-600">
+                    ¥{totalSpent.toLocaleString()}
+                  </td>
+                </tr>
+                <tr className="bg-gray-50">
+                  <td colSpan={4} className="p-3 text-right border border-gray-200">
+                    维修次数
+                  </td>
+                  <td className="p-3 text-right border border-gray-200">
+                    {records.length} 次
+                  </td>
+                </tr>
+              </tfoot>
+            </table>
+          )}
+        </div>
+
+        {vehicle.nextMaintenanceMileage && (
+          <div className="p-4 bg-primary-50 rounded-xl border border-primary-200">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-primary-600 font-medium">
+                  下次保养提醒
+                </p>
+                <p className="text-lg font-bold text-primary-700 mt-1">
+                  {vehicle.nextMaintenanceMileage.toLocaleString()} km
+                </p>
+              </div>
+              <div className="text-right">
+                <p className="text-sm text-primary-600">还剩</p>
+                <p className="text-lg font-bold text-primary-700 mt-1">
+                  {Math.max(
+                    0,
+                    vehicle.nextMaintenanceMileage - (vehicle.currentMileage || 0)
+                  ).toLocaleString()}{' '}
+                  km
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        <div className="mt-8 pt-6 border-t border-gray-200 text-center text-sm text-gray-400">
+          <p>感谢您的光临，期待下次为您服务！</p>
+          <p className="mt-1">
+            打印时间：{new Date().toLocaleString('zh-CN')}
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}

@@ -1,0 +1,126 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  font-family: "Noto Sans SC", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+  background-color: #f8fafc;
+}
+
+@layer components {
+  .btn {
+    @apply inline-flex items-center justify-center px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .btn-primary {
+    @apply btn bg-primary-600 text-white hover:bg-primary-700 focus:ring-primary-500 shadow-sm hover:shadow-md;
+  }
+
+  .btn-accent {
+    @apply btn bg-accent-500 text-white hover:bg-accent-600 focus:ring-accent-400 shadow-sm hover:shadow-md;
+  }
+
+  .btn-secondary {
+    @apply btn bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 focus:ring-gray-400;
+  }
+
+  .btn-danger {
+    @apply btn bg-danger-500 text-white hover:bg-danger-600 focus:ring-danger-400;
+  }
+
+  .btn-sm {
+    @apply px-3 py-1.5 text-xs;
+  }
+
+  .btn-lg {
+    @apply px-6 py-3 text-base;
+  }
+
+  .card {
+    @apply bg-white rounded-xl shadow-card border border-gray-100 transition-all duration-200;
+  }
+
+  .card:hover {
+    @apply shadow-card-hover;
+  }
+
+  .input {
+    @apply block w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all duration-200 bg-white;
+  }
+
+  .label {
+    @apply block text-sm font-medium text-gray-700 mb-1.5;
+  }
+
+  .badge {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+  }
+
+  .badge-success {
+    @apply badge bg-success-50 text-success-700;
+  }
+
+  .badge-warning {
+    @apply badge bg-warning-50 text-warning-700;
+  }
+
+  .badge-danger {
+    @apply badge bg-danger-50 text-danger-700;
+  }
+
+  .badge-primary {
+    @apply badge bg-primary-50 text-primary-700;
+  }
+
+  .badge-accent {
+    @apply badge bg-accent-50 text-accent-700;
+  }
+
+  .table {
+    @apply w-full text-sm text-left;
+  }
+
+  .table th {
+    @apply px-4 py-3 font-medium text-gray-600 bg-gray-50 border-b border-gray-200;
+  }
+
+  .table td {
+    @apply px-4 py-3 border-b border-gray-100;
+  }
+
+  .table tr:hover td {
+    @apply bg-gray-50;
+  }
+}
+
+@media print {
+  @page {
+    size: A4;
+    margin: 15mm;
+  }
+
+  body {
+    background: white !important;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+
+  .print-only {
+    display: block !important;
+  }
+}
