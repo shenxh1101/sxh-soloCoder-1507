@@ -14,6 +14,7 @@ interface Database {
   serviceItems: any[];
   mechanics: any[];
   reminders: any[];
+  followUpRecords: any[];
   settings: any;
   nextIds: {
     vehicles: number;
@@ -21,6 +22,7 @@ interface Database {
     serviceItems: number;
     mechanics: number;
     reminders: number;
+    followUpRecords: number;
   };
 }
 
@@ -30,6 +32,7 @@ const defaultDB: Database = {
   serviceItems: [],
   mechanics: [],
   reminders: [],
+  followUpRecords: [],
   settings: {
     maintenanceInterval: 5000,
     reminderThreshold: 1000,
@@ -43,6 +46,7 @@ const defaultDB: Database = {
     serviceItems: 1,
     mechanics: 1,
     reminders: 1,
+    followUpRecords: 1,
   },
 };
 
@@ -137,6 +141,16 @@ export function getSettings(): any {
 export function saveSettings(settings: any) {
   const db = loadDB();
   db.settings = settings;
+  saveDB(db);
+}
+
+export function getFollowUpRecords(): any[] {
+  return loadDB().followUpRecords;
+}
+
+export function saveFollowUpRecords(records: any[]) {
+  const db = loadDB();
+  db.followUpRecords = records;
   saveDB(db);
 }
 

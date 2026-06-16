@@ -87,12 +87,24 @@ router.get('/mechanics', (req, res) => {
     const avgCost =
       mechanicRecords.length > 0 ? totalRevenue / mechanicRecords.length : 0;
 
+    const durations = mechanicRecords
+      .map((r) => r.duration_minutes)
+      .filter((d) => d && d > 0) as number[];
+    const totalDuration = durations.reduce((sum, d) => sum + d, 0);
+    const avgDuration = durations.length > 0 ? totalDuration / durations.length : 0;
+
+    const reworkCount = mechanicRecords.filter((r) => r.is_rework).length;
+    const reworkRate = mechanicRecords.length > 0 ? reworkCount / mechanicRecords.length : 0;
+
     return {
       id: m.id,
       name: m.name,
       recordCount: mechanicRecords.length,
       totalRevenue,
       avgCost: Math.round(avgCost * 100) / 100,
+      avgDurationMinutes: Math.round(avgDuration * 10) / 10,
+      reworkCount,
+      reworkRate: Math.round(reworkRate * 1000) / 10,
     };
   });
 

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import {
   BarChart3,
   TrendingUp,
@@ -6,8 +6,13 @@ import {
   Wrench,
   DollarSign,
   Calendar,
+  Clock,
+  RefreshCw,
+  Trophy,
 } from 'lucide-react';
 import { useAppStore } from '../store/useAppStore';
+
+type SortType = 'count' | 'duration' | 'rework';
 
 export default function Statistics() {
   const {
@@ -23,12 +28,30 @@ export default function Statistics() {
     const now = new Date();
     return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
   });
+  const [mechanicSort, setMechanicSort] = useState<SortType>('count');
 
   useEffect(() => {
     fetchServiceTypeStats(currentMonth);
     fetchMechanicStats(currentMonth);
     fetchRevenueStats(6);
   }, [currentMonth, fetchServiceTypeStats, fetchMechanicStats, fetchRevenueStats]);
+
+  const sortedMechanics = useMemo(() => {
+    const list = [...mechanicStats];
+    switch (mechanicSort) {
+      case 'duration':
+        return list.sort((a, b) => {
+          const aValid = a.avgDurationMinutes > 0 ? a.avgDurationMinutes : Infinity;
+          const bValid = b.avgDurationMinutes > 0 ? b.avgDurationMinutes : Infinity;
+          return aValid - bValid;
+        });
+      case 'rework':
+        return list.sort((a, b) => a.reworkRate - b.reworkRate);
+      case 'count':
+      default:
+        return list.sort((a, b) => b.recordCount - a.recordCount);
+    }
+  }, [mechanicStats, mechanicSort]);
 
   const maxServiceCount = Math.max(...serviceTypeStats.map((s) => s.count), 1);
   const maxRevenue = Math.max(...revenueStats.map((r) => r.revenue), 1);
@@ -151,50 +174,109 @@ export default function Statistics() {
         </div>
 
         <div className="card p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-6 flex items-center gap-2">
-            <Users className="w-5 h-5 text-accent-600" />
-            本月师傅排名
-          </h2>
-          {mechanicStats.length === 0 ? (
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+              <Users className="w-5 h-5 text-accent-600" />
+              本月师傅排名
+            </h2>
+            <div className="flex gap-1 p-1 bg-gray-100 rounded-lg">
+              <button
+                className={`px-3 py-1 text-xs rounded-md transition-colors ${
+                  mechanicSort === 'count'
+                    ? 'bg-white text-primary-700 font-medium shadow-sm'
+                    : 'text-gray-500 hover:text-gray-700'
+                }`}
+                onClick={() => setMechanicSort('count')}
+              >
+                <Trophy className="w-3 h-3 inline mr-1" />
+                接单量
+              </button>
+              <button
+                className={`px-3 py-1 text-xs rounded-md transition-colors ${
+                  mechanicSort === 'duration'
+                    ? 'bg-white text-primary-700 font-medium shadow-sm'
+                    : 'text-gray-500 hover:text-gray-700'
+                }`}
+                onClick={() => setMechanicSort('duration')}
+              >
+                <Clock className="w-3 h-3 inline mr-1" />
+                平均用时
+              </button>
+              <button
+                className={`px-3 py-1 text-xs rounded-md transition-colors ${
+                  mechanicSort === 'rework'
+                    ? 'bg-white text-primary-700 font-medium shadow-sm'
+                    : 'text-gray-500 hover:text-gray-700'
+                }`}
+                onClick={() => setMechanicSort('rework')}
+              >
+                <RefreshCw className="w-3 h-3 inline mr-1" />
+                返工率
+              </button>
+            </div>
+          </div>
+          {sortedMechanics.length === 0 ? (
             <div className="text-center py-12 text-gray-400">
               <Users className="w-12 h-12 mx-auto mb-3 opacity-50" />
               <p>本月暂无数据</p>
             </div>
           ) : (
             <div className="space-y-3">
-              {mechanicStats.map((mechanic, index) => (
+              {sortedMechanics.map((mechanic, index) => (
                 <div
                   key={mechanic.id}
-                  className="flex items-center gap-4 p-3 bg-gray-50 rounded-xl"
+                  className="p-4 bg-gray-50 rounded-xl"
                 >
-                  <div
-                    className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
-                      index === 0
-                        ? 'bg-yellow-400 text-yellow-900'
-                        : index === 1
-                        ? 'bg-gray-300 text-gray-700'
-                        : index === 2
-                        ? 'bg-amber-600 text-white'
-                        : 'bg-gray-200 text-gray-600'
-                    }`}
-                  >
-                    {index + 1}
+                  <div className="flex items-center gap-3 mb-2">
+                    <div
+                      className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0 ${
+                        index === 0
+                          ? 'bg-yellow-400 text-yellow-900'
+                          : index === 1
+                          ? 'bg-gray-300 text-gray-700'
+                          : index === 2
+                          ? 'bg-amber-600 text-white'
+                          : 'bg-gray-200 text-gray-600'
+                      }`}
+                    >
+                      {index + 1}
+                    </div>
+                    <div className="flex-1">
+                      <p className="font-semibold text-gray-900">
+                        {mechanic.name}
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-semibold text-accent-600">
+                        ¥{mechanic.totalRevenue.toLocaleString()}
+                      </p>
+                    </div>
                   </div>
-                  <div className="flex-1">
-                    <p className="font-medium text-gray-900">
-                      {mechanic.name}
-                    </p>
-                    <p className="text-xs text-gray-500">
-                      {mechanic.recordCount} 次维修
-                    </p>
-                  </div>
-                  <div className="text-right">
-                    <p className="font-semibold text-accent-600">
-                      ¥{mechanic.totalRevenue.toLocaleString()}
-                    </p>
-                    <p className="text-xs text-gray-400">
-                      均价 ¥{mechanic.avgCost.toLocaleString()}
-                    </p>
+                  <div className="grid grid-cols-3 gap-2 ml-11">
+                    <div className="text-center p-2 bg-white rounded-lg">
+                      <p className="text-xs text-gray-400 mb-1">接单</p>
+                      <p className="text-sm font-semibold text-gray-800">
+                        {mechanic.recordCount} 次
+                      </p>
+                    </div>
+                    <div className="text-center p-2 bg-white rounded-lg">
+                      <p className="text-xs text-gray-400 mb-1">平均用时</p>
+                      <p className="text-sm font-semibold text-gray-800">
+                        {mechanic.avgDurationMinutes > 0
+                          ? `${mechanic.avgDurationMinutes} 分`
+                          : '-'}
+                      </p>
+                    </div>
+                    <div className="text-center p-2 bg-white rounded-lg">
+                      <p className="text-xs text-gray-400 mb-1">返工率</p>
+                      <p
+                        className={`text-sm font-semibold ${
+                          mechanic.reworkRate > 0 ? 'text-danger-600' : 'text-success-600'
+                        }`}
+                      >
+                        {mechanic.recordCount > 0 ? `${mechanic.reworkRate}%` : '-'}
+                      </p>
+                    </div>
                   </div>
                 </div>
               ))}

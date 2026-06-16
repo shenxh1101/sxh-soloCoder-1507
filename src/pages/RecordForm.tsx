@@ -11,6 +11,8 @@ import {
   DollarSign,
   User,
   Gauge,
+  Clock,
+  RefreshCw,
 } from 'lucide-react';
 import { useAppStore } from '../store/useAppStore';
 import type { ServiceItem } from '../../shared/types';
@@ -55,6 +57,10 @@ export default function RecordForm() {
   const [mileage, setMileage] = useState('');
   const [mechanicId, setMechanicId] = useState<number | null>(null);
   const [mechanicName, setMechanicName] = useState('');
+  const [startTime, setStartTime] = useState('');
+  const [endTime, setEndTime] = useState('');
+  const [durationMinutes, setDurationMinutes] = useState('');
+  const [isRework, setIsRework] = useState(false);
   const [notes, setNotes] = useState('');
   const [serviceItems, setServiceItems] = useState<ServiceItem[]>([]);
   const [error, setError] = useState('');
@@ -73,6 +79,17 @@ export default function RecordForm() {
       }
     }
   }, [vehicleId, vehicles]);
+
+  useEffect(() => {
+    if (startTime && endTime) {
+      const start = new Date(startTime).getTime();
+      const end = new Date(endTime).getTime();
+      if (end > start) {
+        const diff = Math.round((end - start) / 60000);
+        setDurationMinutes(String(diff));
+      }
+    }
+  }, [startTime, endTime]);
 
   const filteredVehicles = vehicles.filter(
     (v) =>
@@ -150,6 +167,10 @@ export default function RecordForm() {
         mechanicName: selectedMechanic?.name || mechanicName || '',
         totalCost,
         notes,
+        startTime: startTime || null,
+        endTime: endTime || null,
+        durationMinutes: durationMinutes ? parseInt(durationMinutes) : null,
+        isRework,
       });
       navigate('/records');
     } catch (e: any) {
@@ -277,6 +298,60 @@ export default function RecordForm() {
                 ))}
               </select>
             </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <label className="label">
+                <Clock className="w-4 h-4 inline mr-1" />
+                开始时间
+              </label>
+              <input
+                type="datetime-local"
+                className="input"
+                value={startTime}
+                onChange={(e) => setStartTime(e.target.value)}
+              />
+            </div>
+            <div>
+              <label className="label">
+                <Clock className="w-4 h-4 inline mr-1" />
+                结束时间
+              </label>
+              <input
+                type="datetime-local"
+                className="input"
+                value={endTime}
+                onChange={(e) => setEndTime(e.target.value)}
+              />
+            </div>
+            <div>
+              <label className="label">
+                <Clock className="w-4 h-4 inline mr-1" />
+                耗时 (分钟)
+              </label>
+              <input
+                type="number"
+                className="input"
+                placeholder="自动计算或手动输入"
+                value={durationMinutes}
+                onChange={(e) => setDurationMinutes(e.target.value)}
+              />
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              id="isRework"
+              className="w-4 h-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+              checked={isRework}
+              onChange={(e) => setIsRework(e.target.checked)}
+            />
+            <label htmlFor="isRework" className="text-sm text-gray-700 cursor-pointer flex items-center gap-2">
+              <RefreshCw className="w-4 h-4 text-warning-600" />
+              标记为返工维修
+            </label>
           </div>
 
           <div>

@@ -13,20 +13,44 @@ import {
   Clock,
   DollarSign,
   User,
+  MessageSquare,
+  Plus,
+  Send,
+  CheckCircle,
+  CalendarCheck,
+  XCircle,
 } from 'lucide-react';
 import { useAppStore } from '../store/useAppStore';
 import ConfirmDialog from '../components/ConfirmDialog';
-import type { MaintenanceRecord } from '../../shared/types';
+import Modal from '../components/Modal';
+import type { MaintenanceRecord, FollowUpRecord, FollowUpStatus } from '../../shared/types';
 
 export default function VehicleDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { fetchVehicleDetail, deleteVehicle, loading } = useAppStore();
+  const {
+    fetchVehicleDetail,
+    deleteVehicle,
+    fetchFollowUps,
+    addFollowUp,
+    updateFollowUp,
+    deleteFollowUp,
+    followUps,
+    loading,
+  } = useAppStore();
 
   const [vehicle, setVehicle] = useState<any>(null);
   const [records, setRecords] = useState<MaintenanceRecord[]>([]);
   const [showDelete, setShowDelete] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [showFollowUpModal, setShowFollowUpModal] = useState(false);
+  const [followUpForm, setFollowUpForm] = useState({
+    type: '电话联系',
+    content: '',
+    scheduledDate: '',
+    status: 'called' as FollowUpStatus,
+  });
+  const [submittingFollowUp, setSubmittingFollowUp] = useState(false);
 
   useEffect(() => {
     if (id) {
@@ -39,6 +63,7 @@ export default function VehicleDetail() {
       const data = await fetchVehicleDetail(vehicleId);
       setVehicle(data.vehicle);
       setRecords(data.records || []);
+      fetchFollowUps(vehicleId);
     } catch (e) {
       console.error(e);
     }
@@ -62,6 +87,55 @@ export default function VehicleDetail() {
       month: 'long',
       day: 'numeric',
     });
+  };
+
+  const formatDateTime = (dateStr: string) => {
+    return new Date(dateStr).toLocaleString('zh-CN', {
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  };
+
+  const getStatusBadge = (status: FollowUpStatus) => {
+    switch (status) {
+      case 'called':
+        return <span className="badge-primary">已联系</span>;
+      case 'scheduled':
+        return <span className="badge-warning">已预约</span>;
+      case 'arrived':
+        return <span className="badge-success">已到店</span>;
+      case 'cancelled':
+        return <span className="badge-danger">已取消</span>;
+      default:
+        return null;
+    }
+  };
+
+  const handleAddFollowUp = async () => {
+    if (!id || !followUpForm.content.trim()) return;
+    setSubmittingFollowUp(true);
+    try {
+      await addFollowUp({
+        vehicleId: parseInt(id),
+        type: followUpForm.type,
+        content: followUpForm.content,
+        scheduledDate: followUpForm.scheduledDate || null,
+        status: followUpForm.status,
+      });
+      setFollowUpForm({
+        type: '电话联系',
+        content: '',
+        scheduledDate: '',
+        status: 'called',
+      });
+      setShowFollowUpModal(false);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setSubmittingFollowUp(false);
+    }
   };
 
   if (!vehicle) {
@@ -215,7 +289,7 @@ export default function VehicleDetail() {
           </div>
         </div>
 
-        <div className="lg:col-span-2">
+        <div className="lg:col-span-2 space-y-6">
           <div className="card p-6">
             <div className="flex items-center justify-between mb-6">
               <h3 className="font-semibold text-gray-900">维修历史</h3>
@@ -251,11 +325,20 @@ export default function VehicleDetail() {
                             <span className="font-medium text-gray-900">
                               {formatDate(record.createdAt)}
                             </span>
+                            {(record as any).isRework && (
+                              <span className="badge-danger text-xs">返工</span>
+                            )}
                           </div>
                           <p className="text-sm text-gray-500 flex items-center gap-1 mt-1">
                             <Gauge className="w-3 h-3" />
                             {record.mileage?.toLocaleString()} km
                           </p>
+                          {(record as any).durationMinutes && (
+                            <p className="text-xs text-gray-400 flex items-center gap-1 mt-1">
+                              <Clock className="w-3 h-3" />
+                              用时 {(record as any).durationMinutes} 分钟
+                            </p>
+                          )}
                         </div>
                         <div className="text-right">
                           <p className="text-lg font-bold text-accent-600">
@@ -292,6 +375,88 @@ export default function VehicleDetail() {
               </div>
             )}
           </div>
+
+          <div className="card p-6">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="font-semibold text-gray-900 flex items-center gap-2">
+                <MessageSquare className="w-5 h-5 text-primary-600" />
+                客户跟进记录
+              </h3>
+              <button
+                className="btn-primary btn-sm no-print"
+                onClick={() => setShowFollowUpModal(true)}
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                添加跟进
+              </button>
+            </div>
+
+            {followUps.length === 0 ? (
+              <div className="text-center py-12 text-gray-400">
+                <MessageSquare className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                <p>暂无跟进记录</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {followUps.map((followUp) => (
+                  <div
+                    key={followUp.id}
+                    className="p-4 bg-gray-50 rounded-xl"
+                  >
+                    <div className="flex items-start justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-medium text-gray-900">
+                          {followUp.type}
+                        </span>
+                        {getStatusBadge(followUp.status)}
+                      </div>
+                      <span className="text-xs text-gray-400">
+                        {formatDateTime(followUp.createdAt)}
+                      </span>
+                    </div>
+                    <p className="text-sm text-gray-600 mb-2">{followUp.content}</p>
+                    {followUp.scheduledDate && (
+                      <p className="text-xs text-warning-600 flex items-center gap-1">
+                        <CalendarCheck className="w-3 h-3" />
+                        预约时间：{formatDate(followUp.scheduledDate)}
+                      </p>
+                    )}
+                    <div className="flex items-center gap-2 mt-3">
+                      {followUp.status !== 'arrived' && (
+                        <button
+                          className="text-xs px-2 py-1 bg-success-50 text-success-700 rounded-md hover:bg-success-100 transition-colors"
+                          onClick={() =>
+                            updateFollowUp(followUp.id, { status: 'arrived' })
+                          }
+                        >
+                          <CheckCircle className="w-3 h-3 inline mr-1" />
+                          标记到店
+                        </button>
+                      )}
+                      {followUp.status !== 'cancelled' &&
+                        followUp.status !== 'arrived' && (
+                          <button
+                            className="text-xs px-2 py-1 bg-gray-100 text-gray-600 rounded-md hover:bg-gray-200 transition-colors"
+                            onClick={() =>
+                              updateFollowUp(followUp.id, { status: 'cancelled' })
+                            }
+                          >
+                            <XCircle className="w-3 h-3 inline mr-1" />
+                            取消
+                          </button>
+                        )}
+                      <button
+                        className="text-xs px-2 py-1 bg-danger-50 text-danger-600 rounded-md hover:bg-danger-100 transition-colors ml-auto"
+                        onClick={() => deleteFollowUp(followUp.id)}
+                      >
+                        删除
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
@@ -305,6 +470,90 @@ export default function VehicleDetail() {
         confirmText="删除"
         isLoading={isDeleting}
       />
+
+      <Modal
+        isOpen={showFollowUpModal}
+        onClose={() => setShowFollowUpModal(false)}
+        title="添加客户跟进记录"
+      >
+        <div className="space-y-4">
+          <div>
+            <label className="label">跟进方式</label>
+            <select
+              className="input"
+              value={followUpForm.type}
+              onChange={(e) =>
+                setFollowUpForm({ ...followUpForm, type: e.target.value })
+              }
+            >
+              <option value="电话联系">电话联系</option>
+              <option value="微信联系">微信联系</option>
+              <option value="到店咨询">到店咨询</option>
+              <option value="其他">其他</option>
+            </select>
+          </div>
+          <div>
+            <label className="label">跟进状态</label>
+            <select
+              className="input"
+              value={followUpForm.status}
+              onChange={(e) =>
+                setFollowUpForm({
+                  ...followUpForm,
+                  status: e.target.value as FollowUpStatus,
+                })
+              }
+            >
+              <option value="called">已联系</option>
+              <option value="scheduled">已预约</option>
+              <option value="arrived">已到店</option>
+              <option value="cancelled">已取消</option>
+            </select>
+          </div>
+          {followUpForm.status === 'scheduled' && (
+            <div>
+              <label className="label">预约到店时间</label>
+              <input
+                type="date"
+                className="input"
+                value={followUpForm.scheduledDate}
+                onChange={(e) =>
+                  setFollowUpForm({ ...followUpForm, scheduledDate: e.target.value })
+                }
+              />
+            </div>
+          )}
+          <div>
+            <label className="label">跟进内容 *</label>
+            <textarea
+              className="input min-h-24 resize-none"
+              placeholder="记录沟通内容、客户反馈、预约详情等..."
+              value={followUpForm.content}
+              onChange={(e) =>
+                setFollowUpForm({ ...followUpForm, content: e.target.value })
+              }
+            />
+          </div>
+          <div className="flex justify-end gap-3 pt-2 border-t border-gray-100">
+            <button
+              type="button"
+              className="btn-secondary"
+              onClick={() => setShowFollowUpModal(false)}
+            >
+              取消
+            </button>
+            <button
+              type="button"
+              className="btn-primary"
+              onClick={handleAddFollowUp}
+              disabled={!followUpForm.content.trim() || submittingFollowUp}
+            >
+              <Send className="w-4 h-4 mr-2" />
+              {submittingFollowUp ? '保存中...' : '保存记录'}
+            </button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }

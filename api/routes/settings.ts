@@ -35,11 +35,11 @@ router.put('/settings', (req, res) => {
   const current = getSettings();
   const updated = {
     ...current,
-    maintenance_interval: maintenanceInterval ?? current.maintenance_interval,
-    reminder_threshold: reminderThreshold ?? current.reminder_threshold,
-    shop_name: shopName ?? current.shop_name,
-    shop_phone: shopPhone ?? current.shop_phone,
-    shop_address: shopAddress ?? current.shop_address,
+    maintenanceInterval: maintenanceInterval ?? current.maintenanceInterval ?? current.maintenance_interval,
+    reminderThreshold: reminderThreshold ?? current.reminderThreshold ?? current.reminder_threshold,
+    shopName: shopName ?? current.shopName ?? current.shop_name,
+    shopPhone: shopPhone ?? current.shopPhone ?? current.shop_phone,
+    shopAddress: shopAddress ?? current.shopAddress ?? current.shop_address,
   };
 
   saveSettings(updated);

@@ -11,6 +11,7 @@ import type {
   MechanicStats,
   RevenueStats,
   PaginatedResponse,
+  FollowUpRecord,
 } from '../../shared/types';
 
 interface AppState {
@@ -26,6 +27,7 @@ interface AppState {
   serviceTypeStats: ServiceTypeStats[];
   mechanicStats: MechanicStats[];
   revenueStats: RevenueStats[];
+  followUps: FollowUpRecord[];
   loading: boolean;
   error: string | null;
 
@@ -56,6 +58,11 @@ interface AppState {
   fetchServiceTypeStats: (month?: string) => Promise<void>;
   fetchMechanicStats: (month?: string) => Promise<void>;
   fetchRevenueStats: (months?: number) => Promise<void>;
+
+  fetchFollowUps: (vehicleId: number) => Promise<void>;
+  addFollowUp: (data: any) => Promise<FollowUpRecord>;
+  updateFollowUp: (id: number, data: any) => Promise<FollowUpRecord>;
+  deleteFollowUp: (id: number) => Promise<void>;
 }
 
 export const useAppStore = create<AppState>((set, get) => ({
@@ -71,6 +78,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   serviceTypeStats: [],
   mechanicStats: [],
   revenueStats: [],
+  followUps: [],
   loading: false,
   error: null,
 
@@ -357,6 +365,61 @@ export const useAppStore = create<AppState>((set, get) => ({
       set({ revenueStats: data });
     } catch (e: any) {
       set({ error: e.message });
+    } finally {
+      set({ loading: false });
+    }
+  },
+
+  fetchFollowUps: async (vehicleId: number) => {
+    set({ loading: true, error: null });
+    try {
+      const data = await api.get<FollowUpRecord[]>(`/follow-ups/vehicle/${vehicleId}`);
+      set({ followUps: data });
+    } catch (e: any) {
+      set({ error: e.message });
+    } finally {
+      set({ loading: false });
+    }
+  },
+
+  addFollowUp: async (data: any) => {
+    set({ loading: true, error: null });
+    try {
+      const record = await api.post<FollowUpRecord>('/follow-ups', data);
+      set({ followUps: [record, ...get().followUps] });
+      return record;
+    } catch (e: any) {
+      set({ error: e.message });
+      throw e;
+    } finally {
+      set({ loading: false });
+    }
+  },
+
+  updateFollowUp: async (id: number, data: any) => {
+    set({ loading: true, error: null });
+    try {
+      const record = await api.put<FollowUpRecord>(`/follow-ups/${id}`, data);
+      set({
+        followUps: get().followUps.map((f) => (f.id === id ? record : f)),
+      });
+      return record;
+    } catch (e: any) {
+      set({ error: e.message });
+      throw e;
+    } finally {
+      set({ loading: false });
+    }
+  },
+
+  deleteFollowUp: async (id: number) => {
+    set({ loading: true, error: null });
+    try {
+      await api.delete(`/follow-ups/${id}`);
+      set({ followUps: get().followUps.filter((f) => f.id !== id) });
+    } catch (e: any) {
+      set({ error: e.message });
+      throw e;
     } finally {
       set({ loading: false });
     }

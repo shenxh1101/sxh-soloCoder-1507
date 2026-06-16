@@ -16,6 +16,7 @@ import recordRoutes from './routes/records.js'
 import reminderRoutes from './routes/reminders.js'
 import statisticsRoutes from './routes/statistics.js'
 import settingsRoutes from './routes/settings.js'
+import followUpRoutes from './routes/followUps.js'
 
 // for esm mode
 const __filename = fileURLToPath(import.meta.url)
@@ -38,6 +39,7 @@ app.use('/api/records', recordRoutes)
 app.use('/api/reminders', reminderRoutes)
 app.use('/api/statistics', statisticsRoutes)
 app.use('/api', settingsRoutes)
+app.use('/api/follow-ups', followUpRoutes)
 
 /**
  * health

@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Car,
@@ -9,6 +9,7 @@ import {
   Phone,
   AlertCircle,
   Clock,
+  X,
 } from 'lucide-react';
 import StatCard from '../components/StatCard';
 import { useAppStore } from '../store/useAppStore';
@@ -23,11 +24,26 @@ export default function Dashboard() {
     fetchReminders,
     updateReminderStatus,
   } = useAppStore();
+  const [showReminderModal, setShowReminderModal] = useState(false);
 
   useEffect(() => {
     fetchDashboardStats();
     fetchReminders('pending');
   }, [fetchDashboardStats, fetchReminders]);
+
+  useEffect(() => {
+    if (reminders.length > 0) {
+      const today = new Date().toDateString();
+      const lastShown = localStorage.getItem('lastReminderModalDate');
+      const notifiedToday = JSON.parse(localStorage.getItem('notifiedRemindersToday') || '[]');
+      const unnotified = reminders.filter((r) => !notifiedToday.includes(r.id));
+
+      if (lastShown !== today && unnotified.length > 0) {
+        setShowReminderModal(true);
+        localStorage.setItem('lastReminderModalDate', today);
+      }
+    }
+  }, [reminders]);
 
   const pendingReminders = reminders.slice(0, 5);
 
@@ -35,6 +51,12 @@ export default function Dashboard() {
     if (reminder.vehicle?.ownerPhone) {
       window.location.href = `tel:${reminder.vehicle.ownerPhone}`;
       updateReminderStatus(reminder.id, 'notified');
+
+      const notifiedToday = JSON.parse(localStorage.getItem('notifiedRemindersToday') || '[]');
+      if (!notifiedToday.includes(reminder.id)) {
+        notifiedToday.push(reminder.id);
+        localStorage.setItem('notifiedRemindersToday', JSON.stringify(notifiedToday));
+      }
     }
   };
 
@@ -236,6 +258,77 @@ export default function Dashboard() {
           </div>
         </div>
       </div>
+
+      {showReminderModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[80vh] overflow-hidden animate-slide-up">
+            <div className="flex items-center justify-between p-5 border-b bg-gradient-to-r from-warning-50 to-accent-50">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-warning-100 flex items-center justify-center">
+                  <Bell className="w-5 h-5 text-warning-600" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-gray-900">保养提醒</h3>
+                  <p className="text-sm text-gray-500">以下车辆即将到保养里程</p>
+                </div>
+              </div>
+              <button
+                className="w-8 h-8 rounded-lg hover:bg-white/50 flex items-center justify-center text-gray-500 transition-colors"
+                onClick={() => setShowReminderModal(false)}
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="p-5 space-y-3 overflow-y-auto max-h-[50vh]">
+              {reminders.map((reminder) => (
+                <div
+                  key={reminder.id}
+                  className="p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors"
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <span className="font-semibold text-gray-900">
+                        {reminder.vehicle?.plateNumber}
+                      </span>
+                      {getUrgencyBadge(reminder.remainingMileage)}
+                    </div>
+                  </div>
+                  <p className="text-sm text-gray-600 mb-1">
+                    {reminder.vehicle?.ownerName} · {reminder.vehicle?.ownerPhone}
+                  </p>
+                  <p className="text-xs text-gray-400 mb-3 flex items-center gap-1">
+                    <Clock className="w-3 h-3" />
+                    还剩 <span className="font-medium text-gray-700">{reminder.remainingMileage?.toLocaleString() || 0}</span> 公里
+                  </p>
+                  <div className="flex gap-2">
+                    <button
+                      className="btn-accent btn-sm flex-1"
+                      onClick={() => handleCall(reminder)}
+                    >
+                      <Phone className="w-4 h-4 mr-1" />
+                      电话联系
+                    </button>
+                    <button
+                      className="btn-secondary btn-sm"
+                      onClick={() => navigate(`/vehicles/${reminder.vehicleId}`)}
+                    >
+                      查看详情
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="p-4 border-t bg-gray-50">
+              <button
+                className="btn-primary w-full"
+                onClick={() => setShowReminderModal(false)}
+              >
+                我知道了
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

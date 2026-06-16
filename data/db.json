@@ -9,10 +9,10 @@
       "color": "黑色",
       "vin": "LFV2A21K5N4567890",
       "current_mileage": 49500,
-      "last_maintenance_date": "2026-05-17T18:31:07.795Z",
+      "last_maintenance_date": "2026-05-17T18:53:51.036Z",
       "next_maintenance_mileage": 50000,
-      "created_at": "2025-12-18T18:31:07.795Z",
-      "updated_at": "2026-06-16T18:31:07.795Z"
+      "created_at": "2025-12-18T18:53:51.036Z",
+      "updated_at": "2026-06-16T18:53:51.036Z"
     },
     {
       "id": 2,
@@ -23,10 +23,10 @@
       "color": "白色",
       "vin": "LFMAP86C5N0123456",
       "current_mileage": 34800,
-      "last_maintenance_date": "2026-04-17T18:31:07.795Z",
+      "last_maintenance_date": "2026-04-17T18:53:51.036Z",
       "next_maintenance_mileage": 35000,
-      "created_at": "2025-11-28T18:31:07.795Z",
-      "updated_at": "2026-06-16T18:31:07.795Z"
+      "created_at": "2025-11-28T18:53:51.036Z",
+      "updated_at": "2026-06-16T18:53:51.036Z"
     },
     {
       "id": 3,
@@ -37,10 +37,10 @@
       "color": "银色",
       "vin": "LHGCV2F4XP1000001",
       "current_mileage": 19200,
-      "last_maintenance_date": "2026-03-18T18:31:07.795Z",
+      "last_maintenance_date": "2026-03-18T18:53:51.036Z",
       "next_maintenance_mileage": 20000,
-      "created_at": "2026-01-17T18:31:07.795Z",
-      "updated_at": "2026-06-16T18:31:07.795Z"
+      "created_at": "2026-01-17T18:53:51.036Z",
+      "updated_at": "2026-06-16T18:53:51.036Z"
     },
     {
       "id": 4,
@@ -51,10 +51,10 @@
       "color": "白色",
       "vin": "WDDWF4KB5NR123456",
       "current_mileage": 28000,
-      "last_maintenance_date": "2026-05-02T18:31:07.795Z",
+      "last_maintenance_date": "2026-05-02T18:53:51.036Z",
       "next_maintenance_mileage": 30000,
-      "created_at": "2025-10-09T18:31:07.795Z",
-      "updated_at": "2026-06-16T18:31:07.795Z"
+      "created_at": "2025-10-09T18:53:51.036Z",
+      "updated_at": "2026-06-16T18:53:51.036Z"
     },
     {
       "id": 5,
@@ -65,142 +65,132 @@
       "color": "红色",
       "vin": "LRW3F7FZ2PC123456",
       "current_mileage": 12000,
-      "last_maintenance_date": "2026-02-16T18:31:07.795Z",
+      "last_maintenance_date": "2026-02-16T18:53:51.036Z",
       "next_maintenance_mileage": 20000,
-      "created_at": "2025-08-20T18:31:07.795Z",
-      "updated_at": "2026-06-16T18:31:07.795Z"
+      "created_at": "2025-08-20T18:53:51.036Z",
+      "updated_at": "2026-06-16T18:53:51.036Z"
     }
   ],
   "maintenanceRecords": [
     {
-      "id": 4,
-      "vehicle_id": 2,
-      "mileage": 23397,
-      "mechanic_id": 4,
-      "mechanic_name": "赵师傅",
-      "total_cost": 2200,
+      "id": 5,
+      "vehicle_id": 3,
+      "mileage": 3019,
+      "mechanic_id": 1,
+      "mechanic_name": "张师傅",
+      "total_cost": 1000,
       "notes": "",
-      "created_at": "2026-06-15T18:31:07.795Z"
+      "created_at": "2026-06-09T18:53:51.036Z"
     },
     {
-      "id": 6,
-      "vehicle_id": 3,
-      "mileage": 7633,
-      "mechanic_id": 3,
-      "mechanic_name": "王师傅",
-      "total_cost": 1860,
+      "id": 3,
+      "vehicle_id": 2,
+      "mileage": 23537,
+      "mechanic_id": 4,
+      "mechanic_name": "赵师傅",
+      "total_cost": 1210,
       "notes": "",
-      "created_at": "2026-06-14T18:31:07.795Z"
+      "created_at": "2026-06-08T18:53:51.036Z"
     },
     {
       "id": 1,
       "vehicle_id": 1,
-      "mileage": 32641,
-      "mechanic_id": 4,
-      "mechanic_name": "赵师傅",
-      "total_cost": 120,
+      "mileage": 39427,
+      "mechanic_id": 3,
+      "mechanic_name": "王师傅",
+      "total_cost": 680,
       "notes": "",
-      "created_at": "2026-06-12T18:31:07.795Z"
-    },
-    {
-      "id": 5,
-      "vehicle_id": 2,
-      "mileage": 28760,
-      "mechanic_id": 1,
-      "mechanic_name": "张师傅",
-      "total_cost": 1280,
-      "notes": "",
-      "created_at": "2026-06-02T18:31:07.795Z"
+      "created_at": "2026-06-06T18:53:51.036Z"
     },
     {
       "id": 7,
       "vehicle_id": 3,
-      "mileage": 12338,
-      "mechanic_id": 2,
-      "mechanic_name": "李师傅",
-      "total_cost": 1400,
+      "mileage": 13207,
+      "mechanic_id": 4,
+      "mechanic_name": "赵师傅",
+      "total_cost": 400,
       "notes": "",
-      "created_at": "2026-05-27T18:31:07.795Z"
-    },
-    {
-      "id": 13,
-      "vehicle_id": 5,
-      "mileage": 5419,
-      "mechanic_id": 3,
-      "mechanic_name": "王师傅",
-      "total_cost": 1580,
-      "notes": "",
-      "created_at": "2026-05-05T18:31:07.795Z"
+      "created_at": "2026-06-03T18:53:51.036Z"
     },
     {
       "id": 9,
       "vehicle_id": 4,
-      "mileage": 16777,
-      "mechanic_id": 3,
-      "mechanic_name": "王师傅",
-      "total_cost": 500,
-      "notes": "",
-      "created_at": "2026-04-18T18:31:07.795Z"
-    },
-    {
-      "id": 12,
-      "vehicle_id": 5,
-      "mileage": 8,
+      "mileage": 16547,
       "mechanic_id": 3,
       "mechanic_name": "王师傅",
       "total_cost": 120,
       "notes": "",
-      "created_at": "2026-04-08T18:31:07.795Z"
+      "created_at": "2026-05-27T18:53:51.036Z"
     },
     {
-      "id": 10,
-      "vehicle_id": 4,
-      "mileage": 21068,
+      "id": 6,
+      "vehicle_id": 3,
+      "mileage": 7862,
       "mechanic_id": 4,
       "mechanic_name": "赵师傅",
-      "total_cost": 1000,
+      "total_cost": 1600,
       "notes": "",
-      "created_at": "2026-03-27T18:31:07.795Z"
+      "created_at": "2026-05-08T18:53:51.036Z"
     },
     {
       "id": 8,
       "vehicle_id": 4,
-      "mileage": 11554,
-      "mechanic_id": 3,
-      "mechanic_name": "王师傅",
-      "total_cost": 80,
+      "mileage": 11785,
+      "mechanic_id": 2,
+      "mechanic_name": "李师傅",
+      "total_cost": 820,
       "notes": "",
-      "created_at": "2026-03-14T18:31:07.795Z"
-    },
-    {
-      "id": 3,
-      "vehicle_id": 1,
-      "mileage": 44084,
-      "mechanic_id": 3,
-      "mechanic_name": "王师傅",
-      "total_cost": 100,
-      "notes": "",
-      "created_at": "2026-02-26T18:31:07.795Z"
+      "created_at": "2026-04-15T18:53:51.036Z"
     },
     {
       "id": 2,
       "vehicle_id": 1,
-      "mileage": 38734,
-      "mechanic_id": 4,
-      "mechanic_name": "赵师傅",
-      "total_cost": 1440,
+      "mileage": 43752,
+      "mechanic_id": 3,
+      "mechanic_name": "王师傅",
+      "total_cost": 1740,
       "notes": "",
-      "created_at": "2026-02-11T18:31:07.795Z"
+      "created_at": "2026-04-13T18:53:51.036Z"
     },
     {
       "id": 11,
       "vehicle_id": 5,
-      "mileage": 0,
+      "mileage": 139,
+      "mechanic_id": 4,
+      "mechanic_name": "赵师傅",
+      "total_cost": 350,
+      "notes": "",
+      "created_at": "2026-04-10T18:53:51.036Z"
+    },
+    {
+      "id": 4,
+      "vehicle_id": 2,
+      "mileage": 29162,
+      "mechanic_id": 3,
+      "mechanic_name": "王师傅",
+      "total_cost": 600,
+      "notes": "",
+      "created_at": "2026-03-20T18:53:51.036Z"
+    },
+    {
+      "id": 12,
+      "vehicle_id": 5,
+      "mileage": 5161,
       "mechanic_id": 1,
       "mechanic_name": "张师傅",
-      "total_cost": 340,
+      "total_cost": 920,
       "notes": "",
-      "created_at": "2026-02-07T18:31:07.795Z"
+      "created_at": "2026-03-06T18:53:51.036Z"
+    },
+    {
+      "id": 10,
+      "vehicle_id": 4,
+      "mileage": 21191,
+      "mechanic_id": 4,
+      "mechanic_name": "赵师傅",
+      "total_cost": 980,
+      "notes": "",
+      "created_at": "2026-02-20T18:53:51.036Z"
     }
   ],
   "serviceItems": [
@@ -214,6 +204,22 @@
     },
     {
       "id": 2,
+      "record_id": 1,
+      "name": "换空调滤芯",
+      "category": "保养",
+      "price": 60,
+      "quantity": 1
+    },
+    {
+      "id": 3,
+      "record_id": 1,
+      "name": "换轮胎",
+      "category": "配件",
+      "price": 500,
+      "quantity": 1
+    },
+    {
+      "id": 4,
       "record_id": 2,
       "name": "四轮定位",
       "category": "保养",
@@ -221,107 +227,91 @@
       "quantity": 2
     },
     {
-      "id": 3,
-      "record_id": 2,
-      "name": "电瓶更换",
-      "category": "配件",
-      "price": 600,
-      "quantity": 2
-    },
-    {
-      "id": 4,
-      "record_id": 3,
-      "name": "换机油滤芯",
-      "category": "保养",
-      "price": 50,
-      "quantity": 2
-    },
-    {
       "id": 5,
-      "record_id": 4,
-      "name": "刹车片更换",
-      "category": "维修",
-      "price": 400,
-      "quantity": 2
-    },
-    {
-      "id": 6,
-      "record_id": 4,
-      "name": "电瓶更换",
-      "category": "配件",
-      "price": 600,
-      "quantity": 2
-    },
-    {
-      "id": 7,
-      "record_id": 4,
-      "name": "空调维修",
-      "category": "维修",
-      "price": 200,
-      "quantity": 1
-    },
-    {
-      "id": 8,
-      "record_id": 5,
-      "name": "换空气滤芯",
-      "category": "保养",
-      "price": 80,
-      "quantity": 1
-    },
-    {
-      "id": 9,
-      "record_id": 5,
-      "name": "空调维修",
-      "category": "维修",
-      "price": 200,
-      "quantity": 1
-    },
-    {
-      "id": 10,
-      "record_id": 5,
-      "name": "换轮胎",
-      "category": "配件",
-      "price": 500,
-      "quantity": 2
-    },
-    {
-      "id": 11,
-      "record_id": 6,
-      "name": "换空气滤芯",
-      "category": "保养",
-      "price": 80,
-      "quantity": 2
-    },
-    {
-      "id": 12,
-      "record_id": 6,
-      "name": "电瓶更换",
-      "category": "配件",
-      "price": 600,
-      "quantity": 2
-    },
-    {
-      "id": 13,
-      "record_id": 6,
+      "record_id": 2,
       "name": "发动机维修",
       "category": "维修",
       "price": 500,
       "quantity": 1
     },
     {
-      "id": 14,
-      "record_id": 7,
-      "name": "电瓶更换",
+      "id": 6,
+      "record_id": 2,
+      "name": "换轮胎",
       "category": "配件",
-      "price": 600,
+      "price": 500,
       "quantity": 2
     },
     {
-      "id": 15,
-      "record_id": 7,
-      "name": "空调维修",
+      "id": 7,
+      "record_id": 3,
+      "name": "换空气滤芯",
+      "category": "保养",
+      "price": 80,
+      "quantity": 2
+    },
+    {
+      "id": 8,
+      "record_id": 3,
+      "name": "换机油滤芯",
+      "category": "保养",
+      "price": 50,
+      "quantity": 1
+    },
+    {
+      "id": 9,
+      "record_id": 3,
+      "name": "发动机维修",
       "category": "维修",
-      "price": 200,
+      "price": 500,
+      "quantity": 2
+    },
+    {
+      "id": 10,
+      "record_id": 4,
+      "name": "换机油",
+      "category": "保养",
+      "price": 300,
+      "quantity": 2
+    },
+    {
+      "id": 11,
+      "record_id": 5,
+      "name": "发动机维修",
+      "category": "维修",
+      "price": 500,
+      "quantity": 2
+    },
+    {
+      "id": 12,
+      "record_id": 6,
+      "name": "换机油",
+      "category": "保养",
+      "price": 300,
+      "quantity": 2
+    },
+    {
+      "id": 13,
+      "record_id": 6,
+      "name": "换轮胎",
+      "category": "配件",
+      "price": 500,
+      "quantity": 2
+    },
+    {
+      "id": 14,
+      "record_id": 7,
+      "name": "刹车片更换",
+      "category": "维修",
+      "price": 400,
+      "quantity": 1
+    },
+    {
+      "id": 15,
+      "record_id": 8,
+      "name": "换空调滤芯",
+      "category": "保养",
+      "price": 60,
       "quantity": 1
     },
     {
@@ -330,71 +320,79 @@
       "name": "换空气滤芯",
       "category": "保养",
       "price": 80,
-      "quantity": 1
+      "quantity": 2
     },
     {
       "id": 17,
-      "record_id": 9,
-      "name": "换轮胎",
+      "record_id": 8,
+      "name": "电瓶更换",
       "category": "配件",
-      "price": 500,
+      "price": 600,
       "quantity": 1
     },
     {
       "id": 18,
-      "record_id": 10,
-      "name": "发动机维修",
-      "category": "维修",
-      "price": 500,
-      "quantity": 2
-    },
-    {
-      "id": 19,
-      "record_id": 11,
-      "name": "四轮定位",
-      "category": "保养",
-      "price": 120,
-      "quantity": 2
-    },
-    {
-      "id": 20,
-      "record_id": 11,
-      "name": "换机油滤芯",
-      "category": "保养",
-      "price": 50,
-      "quantity": 2
-    },
-    {
-      "id": 21,
-      "record_id": 12,
+      "record_id": 9,
       "name": "四轮定位",
       "category": "保养",
       "price": 120,
       "quantity": 1
     },
     {
-      "id": 22,
-      "record_id": 13,
+      "id": 19,
+      "record_id": 10,
+      "name": "电瓶更换",
+      "category": "配件",
+      "price": 600,
+      "quantity": 1
+    },
+    {
+      "id": 20,
+      "record_id": 10,
+      "name": "换机油",
+      "category": "保养",
+      "price": 300,
+      "quantity": 1
+    },
+    {
+      "id": 21,
+      "record_id": 10,
       "name": "换空气滤芯",
       "category": "保养",
       "price": 80,
       "quantity": 1
     },
     {
+      "id": 22,
+      "record_id": 11,
+      "name": "换机油",
+      "category": "保养",
+      "price": 300,
+      "quantity": 1
+    },
+    {
       "id": 23,
-      "record_id": 13,
-      "name": "换轮胎",
-      "category": "配件",
-      "price": 500,
-      "quantity": 2
+      "record_id": 11,
+      "name": "换机油滤芯",
+      "category": "保养",
+      "price": 50,
+      "quantity": 1
     },
     {
       "id": 24,
-      "record_id": 13,
-      "name": "发动机维修",
+      "record_id": 12,
+      "name": "刹车片更换",
       "category": "维修",
-      "price": 500,
-      "quantity": 1
+      "price": 400,
+      "quantity": 2
+    },
+    {
+      "id": 25,
+      "record_id": 12,
+      "name": "换空调滤芯",
+      "category": "保养",
+      "price": 60,
+      "quantity": 2
     }
   ],
   "mechanics": [
@@ -403,28 +401,28 @@
       "name": "张师傅",
       "phone": "13800138001",
       "specialty": "发动机维修",
-      "created_at": "2026-06-16T18:31:07.795Z"
+      "created_at": "2026-06-16T18:53:51.036Z"
     },
     {
       "id": 2,
       "name": "李师傅",
       "phone": "13800138002",
       "specialty": "电路空调",
-      "created_at": "2026-06-16T18:31:07.795Z"
+      "created_at": "2026-06-16T18:53:51.036Z"
     },
     {
       "id": 3,
       "name": "王师傅",
       "phone": "13800138003",
       "specialty": "钣金喷漆",
-      "created_at": "2026-06-16T18:31:07.795Z"
+      "created_at": "2026-06-16T18:53:51.036Z"
     },
     {
       "id": 4,
       "name": "赵师傅",
       "phone": "13800138004",
       "specialty": "底盘维修",
-      "created_at": "2026-06-16T18:31:07.795Z"
+      "created_at": "2026-06-16T18:53:51.036Z"
     }
   ],
   "reminders": [
@@ -438,7 +436,7 @@
       "remaining_mileage": 500,
       "status": "pending",
       "notified_at": null,
-      "created_at": "2026-06-16T18:31:22.203Z"
+      "created_at": "2026-06-16T18:55:23.050Z"
     },
     {
       "id": 2,
@@ -448,9 +446,9 @@
       "target_date": null,
       "current_mileage": 34800,
       "remaining_mileage": 200,
-      "status": "pending",
-      "notified_at": null,
-      "created_at": "2026-06-16T18:31:22.203Z"
+      "status": "notified",
+      "notified_at": "2026-06-16T18:55:33.013Z",
+      "created_at": "2026-06-16T18:55:23.050Z"
     },
     {
       "id": 3,
@@ -462,21 +460,46 @@
       "remaining_mileage": 800,
       "status": "pending",
       "notified_at": null,
-      "created_at": "2026-06-16T18:31:22.203Z"
+      "created_at": "2026-06-16T18:55:23.050Z"
+    },
+    {
+      "id": 4,
+      "vehicle_id": 4,
+      "type": "mileage",
+      "target_mileage": 30000,
+      "target_date": null,
+      "current_mileage": 28000,
+      "remaining_mileage": 2000,
+      "status": "pending",
+      "notified_at": null,
+      "created_at": "2026-06-16T18:59:23.231Z"
+    }
+  ],
+  "followUpRecords": [
+    {
+      "id": 1,
+      "vehicle_id": 2,
+      "type": "电话联系",
+      "content": "客户已电话联系，约定后天上午到店做保养。",
+      "scheduled_date": null,
+      "status": "called",
+      "created_at": "2026-06-16T18:56:07.758Z",
+      "created_by": "管理员"
     }
   ],
   "settings": {
-    "maintenanceInterval": 5000,
-    "reminderThreshold": 1000,
-    "shopName": "诚信汽修店",
+    "maintenanceInterval": 8000,
+    "reminderThreshold": 2000,
+    "shopName": "?????",
     "shopPhone": "400-123-4567",
-    "shopAddress": "北京市朝阳区汽修街88号"
+    "shopAddress": "?????????88?"
   },
   "nextIds": {
     "vehicles": 1,
     "maintenanceRecords": 1,
     "serviceItems": 1,
     "mechanics": 1,
-    "reminders": 4
+    "reminders": 5,
+    "followUpRecords": 2
   }
 }

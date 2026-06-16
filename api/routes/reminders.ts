@@ -26,6 +26,7 @@ function toCamelCase(obj: any): any {
 
 function generateReminders() {
   const settings = getSettings();
+  const reminderThreshold = settings.reminderThreshold ?? settings.reminder_threshold ?? 1000;
   const vehicles = getVehicles();
   const existingReminders = getReminders();
   const now = new Date().toISOString();
@@ -42,7 +43,7 @@ function generateReminders() {
 
     const remaining = vehicle.next_maintenance_mileage - vehicle.current_mileage;
 
-    if (remaining <= settings.reminderThreshold) {
+    if (remaining <= reminderThreshold) {
       const reminderId = getNextId('reminders');
       newReminders.push({
         id: reminderId,

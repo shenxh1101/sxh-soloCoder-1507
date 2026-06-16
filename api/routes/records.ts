@@ -99,8 +99,19 @@ router.get('/:id', (req, res) => {
 });
 
 router.post('/', (req, res) => {
-  const { vehicleId, mileage, serviceItems, mechanicId, mechanicName, totalCost, notes } =
-    req.body;
+  const {
+    vehicleId,
+    mileage,
+    serviceItems,
+    mechanicId,
+    mechanicName,
+    totalCost,
+    notes,
+    startTime,
+    endTime,
+    durationMinutes,
+    isRework,
+  } = req.body;
 
   if (!vehicleId || !mileage || !serviceItems || serviceItems.length === 0) {
     return res.status(400).json({ error: '车辆ID、里程、维修项目为必填项' });
@@ -114,8 +125,14 @@ router.post('/', (req, res) => {
   }
 
   const settings = getSettings();
+  const maintenanceInterval = settings.maintenanceInterval ?? settings.maintenance_interval ?? 5000;
   const now = new Date().toISOString();
   const recordId = getNextId('maintenanceRecords');
+
+  let calculatedDuration = durationMinutes;
+  if (!calculatedDuration && startTime && endTime) {
+    calculatedDuration = Math.round((new Date(endTime).getTime() - new Date(startTime).getTime()) / 60000);
+  }
 
   const newRecord = {
     id: recordId,
@@ -125,6 +142,10 @@ router.post('/', (req, res) => {
     mechanic_name: mechanicName || '',
     total_cost: totalCost || 0,
     notes: notes || '',
+    start_time: startTime || null,
+    end_time: endTime || null,
+    duration_minutes: calculatedDuration || null,
+    is_rework: isRework || false,
     created_at: now,
   };
 
@@ -147,7 +168,7 @@ router.post('/', (req, res) => {
 
   vehicles[vehicleIndex].current_mileage = mileage;
   vehicles[vehicleIndex].last_maintenance_date = now;
-  vehicles[vehicleIndex].next_maintenance_mileage = mileage + settings.maintenanceInterval;
+  vehicles[vehicleIndex].next_maintenance_mileage = mileage + maintenanceInterval;
   vehicles[vehicleIndex].updated_at = now;
   saveVehicles(vehicles);
 
@@ -168,7 +189,27 @@ router.put('/:id', (req, res) => {
     return res.status(404).json({ error: '记录不存在' });
   }
 
-  const { mileage, serviceItems, mechanicId, mechanicName, totalCost, notes } = req.body;
+  const {
+    mileage,
+    serviceItems,
+    mechanicId,
+    mechanicName,
+    totalCost,
+    notes,
+    startTime,
+    endTime,
+    durationMinutes,
+    isRework,
+  } = req.body;
+
+  let calculatedDuration = durationMinutes;
+  if (!calculatedDuration && startTime && endTime) {
+    calculatedDuration = Math.round((new Date(endTime).getTime() - new Date(startTime).getTime()) / 60000);
+  } else if (startTime && !endTime && records[index].end_time) {
+    calculatedDuration = Math.round((new Date(records[index].end_time).getTime() - new Date(startTime).getTime()) / 60000);
+  } else if (!startTime && endTime && records[index].start_time) {
+    calculatedDuration = Math.round((new Date(endTime).getTime() - new Date(records[index].start_time).getTime()) / 60000);
+  }
 
   const updated = {
     ...records[index],
@@ -177,6 +218,10 @@ router.put('/:id', (req, res) => {
     mechanic_name: mechanicName !== undefined ? mechanicName : records[index].mechanic_name,
     total_cost: totalCost !== undefined ? totalCost : records[index].total_cost,
     notes: notes !== undefined ? notes : records[index].notes,
+    start_time: startTime !== undefined ? startTime : records[index].start_time,
+    end_time: endTime !== undefined ? endTime : records[index].end_time,
+    duration_minutes: calculatedDuration !== undefined ? calculatedDuration : records[index].duration_minutes,
+    is_rework: isRework !== undefined ? isRework : records[index].is_rework,
   };
 
   records[index] = updated;

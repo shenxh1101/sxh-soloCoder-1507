@@ -30,7 +30,24 @@ export interface MaintenanceRecord {
   mechanicName: string;
   totalCost: number;
   notes: string;
+  startTime?: string | null;
+  endTime?: string | null;
+  durationMinutes?: number | null;
+  isRework?: boolean;
   createdAt: string;
+}
+
+export type FollowUpStatus = 'called' | 'scheduled' | 'arrived' | 'cancelled';
+
+export interface FollowUpRecord {
+  id: number;
+  vehicleId: number;
+  type: string;
+  content: string;
+  scheduledDate?: string | null;
+  status: FollowUpStatus;
+  createdAt: string;
+  createdBy: string;
 }
 
 export interface Mechanic {
@@ -85,6 +102,9 @@ export interface MechanicStats {
   recordCount: number;
   totalRevenue: number;
   avgCost: number;
+  avgDurationMinutes: number;
+  reworkCount: number;
+  reworkRate: number;
 }
 
 export interface RevenueStats {
